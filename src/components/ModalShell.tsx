@@ -1,4 +1,5 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useId, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 
 interface ModalShellProps {
   title: string
@@ -9,6 +10,7 @@ interface ModalShellProps {
 }
 
 export function ModalShell({ title, eyebrow, children, onClose, size = 'normal' }: ModalShellProps) {
+  const titleId = useId()
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -22,11 +24,11 @@ export function ModalShell({ title, eyebrow, children, onClose, size = 'normal' 
     }
   }, [onClose])
 
-  return (
-    <div className="modal-overlay" role="presentation" onMouseDown={(event) => {
+  return createPortal(
+    <div className="modal-overlay" role="presentation" onPointerDown={(event) => {
       if (event.target === event.currentTarget) onClose()
     }}>
-      <section className={`modal-card modal-card--${size}`} role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <section className={`modal-card modal-card--${size}`} role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <div className="modal-card__header">
           <div>
             {eyebrow && <p className="section-kicker">{eyebrow}</p>}
@@ -38,7 +40,8 @@ export function ModalShell({ title, eyebrow, children, onClose, size = 'normal' 
         </div>
         <div className="modal-card__body">{children}</div>
       </section>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

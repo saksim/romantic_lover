@@ -4,6 +4,44 @@ import { ProfileModal } from '../../components/ProfileModal'
 import type { CoupleProfile, TimeCapsule } from '../../domain/wish'
 import { daysSince, daysUntil, formatChineseDate } from '../../utils/date'
 
+const BACKUP_FORMAT = 'future-with-you.full-backup'
+const BACKUP_FORMAT_VERSION = 1
+const LAST_BACKUP_KEY = 'future-with-you.last-backup-at'
+
+type BackupRecord = Record<string, unknown>
+
+function isRecord(value: unknown): value is BackupRecord {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+async function createDigest(value: string): Promise<string | null> {
+  if (!window.crypto?.subtle) return null
+  const hash = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))
+  return Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
+function formatBackupSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+}
+
+function readLastBackupAt(): string | null {
+  try { return window.localStorage.getItem(LAST_BACKUP_KEY) }
+  catch { return null }
+}
+
+function saveLastBackupAt(value: string): void {
+  try { window.localStorage.setItem(LAST_BACKUP_KEY, value) }
+  catch { /* The downloaded file is still valid when localStorage is unavailable. */ }
+}
+
+function formatBackupMoment(value: string | null): string {
+  if (!value) return '还没有导出过完整备份'
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? '上次备份时间未知' : `上次导出：${date.toLocaleString('zh-CN', { hour12: false })}`
+}
+
 interface TogetherScreenProps {
   profile: CoupleProfile
   capsules: TimeCapsule[]
@@ -37,8 +75,11 @@ export function TogetherScreen({ profile, capsules, completedCount, photoCount, 
   const [profileOpen, setProfileOpen] = useState(false)
   const [capsuleOpen, setCapsuleOpen] = useState(false)
   const [expandedCapsule, setExpandedCapsule] = useState<string | null>(null)
+  const [lastBackupAt, setLastBackupAt] = useState(readLastBackupAt)
   const importInput = useRef<HTMLInputElement>(null)
   const togetherDays = daysSince(profile.anniversaryDate)
+  const backupSize = formatBackupSize(new Blob([exportData]).size)
+  const backupMoment = formatBackupMoment(lastBackupAt)
 
   const saveProfile = (nextProfile: CoupleProfile) => {
     onSaveProfile(nextProfile)
@@ -63,22 +104,76 @@ export function TogetherScreen({ profile, capsules, completedCount, photoCount, 
     onDeleteCapsule(capsule.id)
     onNotify('时间胶囊已经删除')
   }
-  const exportBackup = () => {
-    const blob = new Blob([exportData], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = `future-with-you-backup-${new Date().toISOString().slice(0, 10)}.json`
-    anchor.click()
-    URL.revokeObjectURL(url)
-    onNotify('你们的故事备份已经保存')
+  const exportBackup = async () => {
+    try {
+      const state: unknown = JSON.parse(exportData)
+      const statePayload = JSON.stringify(state)
+      const exportedAt = new Date().toISOString()
+      const checksum = await createDigest(statePayload)
+      const backup = {
+        format: BACKUP_FORMAT,
+        formatVersion: BACKUP_FORMAT_VERSION,
+        exportedAt,
+        app: { name: 'Future With You', stateVersion: isRecord(state) ? state.version : undefined },
+        integrity: checksum ? { algorithm: 'SHA-256', value: checksum } : null,
+        summary: {
+          completedWishes: completedCount,
+          localPhotos: photoCount,
+          dailyAnswers: answerCount,
+          customWishes: customWishCount,
+          timeCapsules: capsules.length,
+        },
+        state,
+      }
+      const payload = JSON.stringify(backup, null, 2)
+      const blob = new Blob([payload], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `future-with-you-full-backup-${exportedAt.slice(0, 19).replace(/[:T]/g, '-')}.json`
+      document.body.append(anchor)
+      anchor.click()
+      anchor.remove()
+      window.setTimeout(() => URL.revokeObjectURL(url), 2_000)
+      saveLastBackupAt(exportedAt)
+      setLastBackupAt(exportedAt)
+      onNotify(`完整备份已下载（${formatBackupSize(blob.size)}）`)
+    } catch {
+      onNotify('备份创建失败，请确认浏览器允许下载后再试一次')
+    }
   }
   const importBackup = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
-    const success = onImport(await file.text())
-    onNotify(success ? '备份恢复成功，欢迎回来' : '这份文件不是可识别的 Future With You 备份')
-    event.target.value = ''
+    if (!window.confirm('恢复会用备份内容替换当前设备上的全部记录。建议先下载一份当前备份，确定继续吗？')) {
+      event.target.value = ''
+      return
+    }
+    try {
+      const raw = await file.text()
+      const parsed: unknown = JSON.parse(raw)
+      let statePayload = raw
+      if (isRecord(parsed) && parsed.format === BACKUP_FORMAT) {
+        if (parsed.formatVersion !== BACKUP_FORMAT_VERSION || !('state' in parsed)) throw new Error('unsupported backup')
+        statePayload = JSON.stringify(parsed.state)
+        if (parsed.integrity !== null && parsed.integrity !== undefined) {
+          if (!isRecord(parsed.integrity) || parsed.integrity.algorithm !== 'SHA-256' || typeof parsed.integrity.value !== 'string') {
+            throw new Error('invalid integrity metadata')
+          }
+          const checksum = await createDigest(statePayload)
+          if (checksum && checksum !== parsed.integrity.value) {
+            onNotify('备份完整性校验失败，文件可能已损坏，请不要恢复')
+            return
+          }
+        }
+      }
+      const success = onImport(statePayload)
+      onNotify(success ? '完整备份恢复成功，欢迎回来' : '这份文件不是可识别的 Future With You 备份')
+    } catch {
+      onNotify('备份无法读取、版本不兼容或文件已经损坏')
+    } finally {
+      event.target.value = ''
+    }
   }
   const install = async () => {
     const installed = await onInstall()
@@ -133,16 +228,35 @@ export function TogetherScreen({ profile, capsules, completedCount, photoCount, 
         {!isStandalone && canInstall && <button type="button" className="primary-button" onClick={install}>现在安装</button>}
       </section>
 
-      <section className="settings-section">
-        <div className="section-title-row"><div><p className="section-kicker">KEEP IT SAFE</p><h2>礼物与数据</h2></div></div>
-        <label className="setting-row"><span><strong>浪漫氛围特效</strong><small>花瓣、光晕与完成庆祝动画</small></span><input type="checkbox" checked={romanceEffects} onChange={(event) => onSetRomanceEffects(event.target.checked)} /></label>
-        <button type="button" className="setting-row setting-row--button" onClick={onReopenGift}><span><strong>重看礼物开场</strong><small>不会清除任何记录</small></span><i aria-hidden="true">→</i></button>
-        <button type="button" className="setting-row setting-row--button" onClick={exportBackup}><span><strong>备份我们的故事</strong><small>导出愿望、答案、时间胶囊和本地照片</small></span><i aria-hidden="true">↓</i></button>
-        <button type="button" className="setting-row setting-row--button" onClick={() => importInput.current?.click()}><span><strong>恢复一份备份</strong><small>会替换当前设备里的记录</small></span><i aria-hidden="true">↑</i></button>
-        <input ref={importInput} className="visually-hidden" type="file" accept="application/json,.json" onChange={importBackup} />
+      <section className="data-vault" aria-labelledby="data-vault-title">
+        <div className="data-vault__heading">
+          <span className="data-vault__seal" aria-hidden="true">♥</span>
+          <div><p className="section-kicker">TAKE OUR STORY WITH US</p><h2 id="data-vault-title">数据保险箱</h2></div>
+        </div>
+        <p className="data-vault__intro">把这台设备里的全部故事封装成一个可带走的 JSON 文件。它包含资料、愿望状态、回忆文字、照片、每日回答、时间胶囊与偏好设置。</p>
+        <div className="data-vault__summary" aria-label="本次备份内容摘要">
+          <span><strong>{completedCount}</strong><small>回忆</small></span>
+          <span><strong>{photoCount}</strong><small>照片</small></span>
+          <span><strong>{answerCount}</strong><small>回答</small></span>
+          <span><strong>{customWishCount}</strong><small>自定义愿望</small></span>
+          <span><strong>{capsules.length}</strong><small>时间胶囊</small></span>
+        </div>
+        <div className="data-vault__actions">
+          <button type="button" className="primary-button data-vault__download" onClick={exportBackup}><span>下载完整备份</span><small>约 {backupSize}</small></button>
+          <button type="button" className="secondary-button" onClick={() => importInput.current?.click()}>从备份恢复</button>
+        </div>
+        <p className="data-vault__status" role="status">{backupMoment}</p>
+        <p className="data-vault__privacy" id="backup-privacy-note">备份含有你们的私人文字与照片。请保存在自己的手机“文件”、电脑或可信云盘，不要发给陌生人。</p>
+        <input ref={importInput} className="visually-hidden" type="file" accept="application/json,.json" aria-describedby="backup-privacy-note" onChange={importBackup} />
       </section>
 
-      <p className="local-data-note">V0.2 的内容只保存在当前设备。照片会被压缩；定期导出备份，可以避免浏览器清理数据后丢失。</p>
+      <section className="settings-section">
+        <div className="section-title-row"><div><p className="section-kicker">PERSONAL TOUCH</p><h2>礼物设置</h2></div></div>
+        <label className="setting-row"><span><strong>浪漫氛围特效</strong><small>花瓣、光晕与完成庆祝动画</small></span><input type="checkbox" checked={romanceEffects} onChange={(event) => onSetRomanceEffects(event.target.checked)} /></label>
+        <button type="button" className="setting-row setting-row--button" onClick={onReopenGift}><span><strong>重看礼物开场</strong><small>不会清除任何记录</small></span><i aria-hidden="true">→</i></button>
+      </section>
+
+      <p className="local-data-note">dist 只放网站程序，不保存你们的记录；下载的 JSON 才是可以带走、跨版本恢复的副本。换域名、清理浏览器或卸载应用前，请先备份。</p>
 
       {profileOpen && <ProfileModal profile={profile} onSave={saveProfile} onClose={() => setProfileOpen(false)} />}
       {capsuleOpen && <CapsuleModal onSave={saveCapsule} onClose={() => setCapsuleOpen(false)} />}
