@@ -1,7 +1,7 @@
 {
   "name": "future-with-you",
   "private": true,
-  "version": "0.5.0-dev.1",
+  "version": "0.5.0-dev.2",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -9,7 +9,7 @@ export interface BackendConfig {
   }
   supabase: {
     url?: string
-    anonKey?: string
+    publishableKey?: string
   }
 }
 
@@ -32,7 +32,7 @@ export const backendConfig: Readonly<BackendConfig> = Object.freeze({
   },
   supabase: {
     url: optional(import.meta.env.VITE_SUPABASE_URL),
-    anonKey: optional(import.meta.env.VITE_SUPABASE_ANON_KEY),
+    publishableKey: optional(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY),
   },
 })
 
@@ -47,7 +47,7 @@ export function getBackendConfigurationProblems(config: BackendConfig = backendC
   if (config.provider === 'supabase') {
     return [
       !config.supabase.url ? 'VITE_SUPABASE_URL is required.' : '',
-      !config.supabase.anonKey ? 'VITE_SUPABASE_ANON_KEY is required.' : '',
+      !config.supabase.publishableKey ? 'VITE_SUPABASE_PUBLISHABLE_KEY is required.' : '',
     ].filter(Boolean)
   }
 

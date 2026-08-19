@@ -38,7 +38,7 @@ assert.match(domain, /'memory_media'/, 'Media changes must be a first-class sync
 
 assert.match(envExample, /^VITE_BACKEND_PROVIDER=local$/m, 'Local mode must remain the safe default.')
 assert.doesNotMatch(envExample, /SERVICE_ROLE|API_KEY=/, 'Administrator keys must never be suggested to the browser.')
-assert.match(architecture, /Vercel 不需要替换/, 'The deployment guide must keep frontend and backend roles separate.')
+assert.match(architecture, /Vercel Preview/, 'The deployment guide must document the Vercel preview workflow.')
 assert.match(architecture, /retain|保留 V0\.4 本地快照/i, 'The migration guide must preserve the local source until verification.')
 
 console.log(`V0.5 foundation check passed for ${coupleOwnedTables.length} couple-owned tables.`)
