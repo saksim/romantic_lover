@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { getDailyQuestion, getDateKey } from '../../data/dailyQuestions'
-import type { AppView, CoupleProfile, DailyAnswer } from '../../domain/wish'
+import type { AppView, CoupleProfile, DailyAnswer, Memory } from '../../domain/wish'
+import { formatChineseDate } from '../../utils/date'
 
 interface HomeScreenProps {
   profile: CoupleProfile
   dailyAnswer?: DailyAnswer
+  onThisDayMemory?: Memory
   savedCount: number
   completedCount: number
   customCount: number
@@ -12,12 +14,13 @@ interface HomeScreenProps {
   onSaveDailyAnswer: (answer: Omit<DailyAnswer, 'updatedAt'>) => void
   onOpenRoulette: () => void
   onOpenAddWish: () => void
+  onOpenMemory: (memoryId: string) => void
   onNavigate: (view: AppView) => void
   onNotify: (message: string) => void
 }
 
-export function HomeScreen({ profile, dailyAnswer, savedCount, completedCount, customCount, daysTogether,
-  onSaveDailyAnswer, onOpenRoulette, onOpenAddWish, onNavigate, onNotify }: HomeScreenProps) {
+export function HomeScreen({ profile, dailyAnswer, onThisDayMemory, savedCount, completedCount, customCount, daysTogether,
+  onSaveDailyAnswer, onOpenRoulette, onOpenAddWish, onOpenMemory, onNavigate, onNotify }: HomeScreenProps) {
   const question = useMemo(() => getDailyQuestion(), [])
   const dateKey = useMemo(() => getDateKey(), [])
   const [myAnswer, setMyAnswer] = useState(dailyAnswer?.myAnswer ?? '')
@@ -52,6 +55,18 @@ export function HomeScreen({ profile, dailyAnswer, savedCount, completedCount, c
           <div><strong>{completedCount}</strong><span>已经点亮的回忆</span></div>
         </div>
       </div>
+      {onThisDayMemory && (
+        <button type="button" className="memory-of-day" onClick={() => onOpenMemory(onThisDayMemory.id)}>
+          {onThisDayMemory.media[0] && <img src={onThisDayMemory.media[0].dataUrl} alt={onThisDayMemory.media[0].alt} />}
+          <span className="memory-of-day__symbol" aria-hidden="true">✦</span>
+          <span className="memory-of-day__copy">
+            <small>ON THIS DAY · 那年今日</small>
+            <strong>{onThisDayMemory.title}</strong>
+            <em>{formatChineseDate(onThisDayMemory.occurredAt)}，这段故事曾经发生。</em>
+          </span>
+          <i aria-hidden="true">→</i>
+        </button>
+      )}
 
       <button type="button" className="date-night-card" onClick={onOpenRoulette}>
         <div className="date-night-card__art" aria-hidden="true"><span>✦</span><i /><i /></div>
@@ -68,7 +83,7 @@ export function HomeScreen({ profile, dailyAnswer, savedCount, completedCount, c
         <button type="button" onClick={() => document.getElementById('daily-question')?.scrollIntoView({ behavior: 'smooth' })}>
           <span aria-hidden="true">?</span><strong>今日问题</strong><small>再懂彼此一点</small>
         </button>
-        <button type="button" onClick={() => onNavigate('collection')}><span aria-hidden="true">▣</span><strong>回忆相册</strong><small>{completedCount} 段共同故事</small></button>
+        <button type="button" onClick={() => onNavigate('story')}><span aria-hidden="true">✦</span><strong>故事宇宙</strong><small>{completedCount} 个愿望已经成真</small></button>
         <button type="button" onClick={() => onNavigate('together')}><span aria-hidden="true">✉</span><strong>时间胶囊</strong><small>写给未来的信</small></button>
       </div>
 

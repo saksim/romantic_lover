@@ -6,13 +6,13 @@ import type { AppView } from '../domain/wish'
 
 interface AppShellProps {
   view: AppView
-  completedCount: number
+  memoryCount: number
   romanceEffects: boolean
   children: ReactNode
   onNavigate: (view: AppView) => void
 }
 
-export function AppShell({ view, completedCount, romanceEffects, children, onNavigate }: AppShellProps) {
+export function AppShell({ view, memoryCount, romanceEffects, children, onNavigate }: AppShellProps) {
   const showChrome = !['opening', 'secret'].includes(view)
   return (
     <div className={`app-root app-root--${view}`}>
@@ -23,7 +23,7 @@ export function AppShell({ view, completedCount, romanceEffects, children, onNav
           <button type="button" className="brand-button" onClick={() => onNavigate('opening')}>
             <LogoMark compact /><span><strong>Future With You</strong><small>for our unwritten days</small></span>
           </button>
-          <div className="header-progress" aria-label={`已经完成 ${completedCount} 个愿望`}><strong>{completedCount}</strong><span>MEMORIES</span></div>
+          <div className="header-progress" aria-label={`故事宇宙收有 ${memoryCount} 段回忆`}><strong>{memoryCount}</strong><span>MEMORIES</span></div>
         </header>}
         <main className={`app-content${showChrome ? '' : ' app-content--full'}`}>{children}</main>
         {showChrome && <BottomNav activeView={view} onNavigate={onNavigate} />}

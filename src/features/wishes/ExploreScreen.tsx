@@ -15,12 +15,13 @@ interface ExploreScreenProps {
   onComplete: (wish: Wish) => void
   onViewed: (wishId: string) => void
   onAddWish: () => void
+  onOpenCollection: () => void
   onCelebrateSave: () => void
   onNotify: (message: string) => void
 }
 
 export function ExploreScreen({ wishes, categories, categoryMap, profile, progress, savedCount, completedCount,
-  onToggleSaved, onComplete, onViewed, onAddWish, onCelebrateSave, onNotify }: ExploreScreenProps) {
+  onToggleSaved, onComplete, onViewed, onAddWish, onOpenCollection, onCelebrateSave, onNotify }: ExploreScreenProps) {
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('all')
   const [currentIndex, setCurrentIndex] = useState(0)
   const filteredWishes = useMemo(() => selectedCategory === 'all'
@@ -58,6 +59,7 @@ export function ExploreScreen({ wishes, categories, categoryMap, profile, progre
         <button type="button" className="add-wish-button" onClick={onAddWish}><span aria-hidden="true">＋</span>写愿望</button>
       </div>
       <div className="explore-stats"><span><strong>{savedCount}</strong> 个期待</span><i /><span><strong>{completedCount}</strong> 段回忆</span><i /><span><strong>{wishes.length}</strong> 张卡</span></div>
+      <button type="button" className="wish-list-link" onClick={onOpenCollection}><span aria-hidden="true">♥</span>查看我们收好的 {savedCount} 个愿望</button>
       <CategoryTabs categories={categories} selected={selectedCategory} onSelect={setSelectedCategory} />
       <WishCard key={currentWish.id} wish={currentWish} category={categoryMap[currentWish.category]}
         progress={progress[currentWish.id]} position={safeIndex + 1} total={filteredWishes.length}

@@ -1,6 +1,7 @@
 @import './wishes.css';
 @import './today.css';
 @import './effects.css';
+@import './story.css';
 
 :root {
   font-family: "SF Pro Display", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;

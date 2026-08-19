@@ -7,7 +7,7 @@ export interface StorageAdapter {
 
 export function createDefaultState(): PersistedAppState {
   return {
-    version: 2,
+    version: 3,
     hasOpened: false,
     progress: {},
     customWishes: [],
@@ -19,6 +19,7 @@ export function createDefaultState(): PersistedAppState {
     },
     dailyAnswers: {},
     capsules: [],
+    memories: [],
     preferences: { romanceEffects: true },
   }
 }

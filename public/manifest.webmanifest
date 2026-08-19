@@ -1,7 +1,7 @@
 {
   "name": "Future With You",
   "short_name": "With You",
-  "description": "今天、愿望、回忆，以及我们还没写完的未来。",
+  "description": "今天、愿望、时间轴、回忆星空，以及我们还没写完的未来。",
   "lang": "zh-CN",
   "start_url": "./",
   "scope": "./",
