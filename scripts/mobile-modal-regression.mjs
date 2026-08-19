@@ -125,9 +125,94 @@ try {
   }
 
   await waitForValue(() => evaluate(`document.readyState === 'complete' && location.origin === new URL('${baseUrl}').origin`))
-  await evaluate(`localStorage.setItem('future-with-you.app-state.v2', JSON.stringify({ version: 2, hasOpened: true }))`)
+  await evaluate(`localStorage.removeItem('future-with-you.app-state.v3')`)
+  await evaluate(`localStorage.setItem('future-with-you.app-state.v2', JSON.stringify({
+    version: 2,
+    hasOpened: true,
+    progress: {
+      'wish-001': {
+        saved: true,
+        completed: true,
+        updatedAt: '2025-08-19T12:00:00.000Z',
+        completedAt: '2025-08-19',
+        note: '我们一起完成了回归测试的晚餐。',
+        photoDataUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==',
+      },
+    },
+  }))`)
   await client.send('Page.reload')
   await waitForValue(() => evaluate(`document.readyState === 'complete' && Boolean(document.querySelector('.bottom-nav'))`))
+  assert(await evaluate(`(() => {
+    const button = [...document.querySelectorAll('.bottom-nav button')].find((item) => item.textContent.includes('故事'))
+    button?.click()
+    return Boolean(button)
+  })()`), '没有找到“故事”导航按钮')
+  await waitForValue(() => evaluate(`Boolean(document.querySelector('.story-screen'))`))
+  await waitForValue(() => evaluate(`Boolean(localStorage.getItem('future-with-you.app-state.v3'))`))
+  const migrationReport = await evaluate(`(() => {
+    const state = JSON.parse(localStorage.getItem('future-with-you.app-state.v3'))
+    const progress = state.progress['wish-001']
+    return {
+      stateVersion: state.version,
+      memoryCount: state.memories.length,
+      linkedWishId: state.memories[0]?.linkedWishId,
+      timelineContainsMigratedWish: document.querySelector('.story-timeline')?.textContent.includes('一起做一顿没有菜谱的晚餐'),
+      legacyPhotoAndNoteCompacted: !('photoDataUrl' in progress) && !('note' in progress),
+    }
+  })()`)
+  assert.equal(migrationReport.stateVersion, 3, 'V0.3 数据没有迁移到 V0.4 状态')
+  assert.equal(migrationReport.memoryCount, 1, '已完成愿望没有迁移为统一回忆')
+  assert.equal(migrationReport.linkedWishId, 'wish-001', '迁移后的回忆没有关联原愿望')
+  assert.equal(migrationReport.timelineContainsMigratedWish, true, '迁移后的回忆没有显示在时间轴')
+  assert.equal(migrationReport.legacyPhotoAndNoteCompacted, true, '迁移后仍重复保存照片或文字')
+
+  assert(await evaluate(`(() => {
+    const button = [...document.querySelectorAll('.story-tabs button')].find((item) => item.textContent.includes('我们的宇宙'))
+    button?.click()
+    return Boolean(button)
+  })()`), '没有找到“我们的宇宙”标签')
+  await waitForValue(() => evaluate(`document.querySelectorAll('.memory-star').length === 1`))
+  await evaluate(`document.querySelector('.memory-star')?.click()`)
+  await waitForValue(() => evaluate(`Boolean(document.querySelector('.memory-detail'))`))
+  await evaluate(`document.querySelector('.modal-close')?.click()`)
+  await waitForValue(() => evaluate(`!document.querySelector('.memory-detail')`))
+
+  assert(await evaluate(`(() => {
+    const button = [...document.querySelectorAll('.story-tabs button')].find((item) => item.textContent.includes('恋爱博物馆'))
+    button?.click()
+    return Boolean(button)
+  })()`), '没有找到“恋爱博物馆”标签')
+  await waitForValue(() => evaluate(`document.querySelectorAll('.museum-exhibit').length === 1`))
+  console.log(JSON.stringify({ ...migrationReport, universeStars: 1, museumExhibits: 1 }, null, 2))
+  assert(await evaluate(`(() => {
+    const button = document.querySelector('.story-heading .round-add-button')
+    button?.click()
+    return Boolean(button)
+  })()`), '没有找到手动添加回忆按钮')
+  await waitForValue(() => evaluate(`Boolean(document.querySelector('.memory-form'))`))
+  await evaluate(`(() => {
+    const form = document.querySelector('.memory-form')
+    const setValue = (element, value) => {
+      const prototype = element instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype
+      Object.getOwnPropertyDescriptor(prototype, 'value').set.call(element, value)
+      element.dispatchEvent(new Event('input', { bubbles: true }))
+    }
+    setValue(form.querySelector('input[placeholder*="第一次一起看海"]'), '回归测试的珍藏星')
+    setValue(form.querySelector('textarea'), '这是一段由真实移动端表单创建的故事。')
+    form.querySelector('.memory-feature-toggle input').click()
+  })()`)
+  await waitForValue(() => evaluate(`!document.querySelector('.memory-form button[type="submit"]').disabled`))
+  await evaluate(`document.querySelector('.memory-form button[type="submit"]').click()`)
+  await waitForValue(() => evaluate(`JSON.parse(localStorage.getItem('future-with-you.app-state.v3')).memories.length === 2`))
+  const manualMemoryReport = await evaluate(`(() => {
+    const state = JSON.parse(localStorage.getItem('future-with-you.app-state.v3'))
+    const memory = state.memories.find((item) => item.title === '回归测试的珍藏星')
+    return { created: Boolean(memory), featured: memory?.featured, kind: memory?.kind }
+  })()`)
+  assert.equal(manualMemoryReport.created, true, '手动回忆没有保存')
+  assert.equal(manualMemoryReport.featured, true, '珍藏展品开关没有保存')
+  await waitForValue(() => evaluate(`document.querySelector('.museum-exhibit')?.textContent.includes('回归测试的珍藏星')`))
+  console.log(JSON.stringify({ manualMemoryCreated: true, featuredExhibitFirst: true }, null, 2))
 
   assert(await evaluate(`(() => {
     const button = [...document.querySelectorAll('.bottom-nav button')].find((item) => item.textContent.includes('我们'))
@@ -170,7 +255,7 @@ try {
   assert.equal(capturedBackup.mimeType, 'application/json', '下载文件 MIME 类型不正确')
   assert.equal(backup.format, 'future-with-you.full-backup', '下载文件缺少完整备份格式标识')
   assert.equal(backup.formatVersion, 1, '下载文件备份格式版本不正确')
-  assert.equal(backup.state.version, 2, '下载文件没有包含完整应用状态')
+  assert.equal(backup.state.version, 3, '下载文件没有包含完整应用状态')
   assert.equal(backup.integrity.algorithm, 'SHA-256', '下载文件缺少完整性算法')
   const expectedChecksum = createHash('sha256').update(JSON.stringify(backup.state)).digest('hex')
   assert.equal(backup.integrity.value, expectedChecksum, '下载文件的 SHA-256 校验值不正确')

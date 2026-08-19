@@ -1,6 +1,6 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import { ProgressBar } from '../../components/ProgressBar'
-import type { Category, CategoryId, Wish, WishProgressMap } from '../../domain/wish'
+import type { Category, CategoryId, Memory, Wish, WishProgressMap } from '../../domain/wish'
 import { formatChineseDate } from '../../utils/date'
 
 type CollectionTab = 'saved' | 'completed'
@@ -11,6 +11,7 @@ interface CollectionScreenProps {
   categories: Category[]
   categoryMap: Record<CategoryId, Category>
   progress: WishProgressMap
+  memories: Memory[]
   savedCount: number
   completedCount: number
   selectedCount: number
@@ -26,7 +27,7 @@ interface CollectionScreenProps {
   onNotify: (message: string) => void
 }
 
-export function CollectionScreen({ wishes, categories, categoryMap, progress, savedCount, completedCount, selectedCount,
+export function CollectionScreen({ wishes, categories, categoryMap, progress, memories, savedCount, completedCount, selectedCount,
   secretUnlocked, secretOpenedAt, onToggleSaved, onComplete, onUndoCompletion, onDeleteCustomWish, onOpenSecret,
   onExplore, onAddWish, onNotify }: CollectionScreenProps) {
   const [tab, setTab] = useState<CollectionTab>('saved')
@@ -37,6 +38,10 @@ export function CollectionScreen({ wishes, categories, categoryMap, progress, sa
     const filterMatches = filter === 'all' || (filter === 'custom' ? Boolean(wish.source && wish.source !== 'curated') : wish.category === filter)
     return statusMatches && filterMatches
   }), [filter, progress, tab, wishes])
+  const memoriesByWishId = useMemo(
+    () => new Map(memories.filter((memory) => memory.linkedWishId).map((memory) => [memory.linkedWishId as string, memory])),
+    [memories],
+  )
   const remainingForSecret = Math.max(0, 3 - selectedCount)
 
   const removeCustom = (wish: Wish) => {
@@ -78,19 +83,23 @@ export function CollectionScreen({ wishes, categories, categoryMap, progress, sa
           {visibleWishes.map((wish) => {
             const category = categoryMap[wish.category]
             const entry = progress[wish.id]
+            const memory = memoriesByWishId.get(wish.id)
+            const photoDataUrl = memory?.media[0]?.dataUrl ?? entry.photoDataUrl
+            const memoryNote = memory?.story ?? entry.note
+            const completedAt = memory?.occurredAt ?? entry.completedAt
             const custom = Boolean(wish.source && wish.source !== 'curated')
             const style = { '--category-color': category.color, '--category-soft': category.softColor } as CSSProperties
             return (
-              <article className={`collection-card${entry.completed ? ' collection-card--memory' : ''}${entry.photoDataUrl ? ' has-photo' : ''}`} style={style} key={wish.id}>
-                {entry.photoDataUrl && <div className="memory-photo"><img src={entry.photoDataUrl} alt={`${wish.title}的回忆照片`} /></div>}
+              <article className={`collection-card${entry.completed ? ' collection-card--memory' : ''}${photoDataUrl ? ' has-photo' : ''}`} style={style} key={wish.id}>
+                {photoDataUrl && <div className="memory-photo"><img src={photoDataUrl} alt={`${wish.title}的回忆照片`} /></div>}
                 <div className="collection-card__symbol" aria-hidden="true">{entry.completed ? '✓' : category.symbol}</div>
                 <div className="collection-card__content">
                   <div className="collection-card__meta"><span>{custom ? '我们写下的愿望' : category.name}</span><span>{custom ? '#OURS' : `#${String(wish.number).padStart(2, '0')}`}</span></div>
                   <h2>{wish.title}</h2>
                   {entry.completed ? (
                     <>
-                      <p className="completed-date">✦ {formatChineseDate(entry.completedAt)}</p>
-                      {entry.note && <p className="memory-note">“{entry.note}”</p>}
+                      <p className="completed-date">✦ {formatChineseDate(completedAt)}</p>
+                      {memoryNote && <p className="memory-note">“{memoryNote}”</p>}
                     </>
                   ) : wish.plannedFor ? <p className="planned-date">计划在 {formatChineseDate(wish.plannedFor)}</p> : null}
                   <div className="collection-card__actions">

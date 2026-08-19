@@ -1,4 +1,4 @@
-const CACHE_NAME = 'future-with-you-v0.2.0'
+const CACHE_NAME = 'future-with-you-v0.4.0'
 const APP_SHELL = [
   './',
   './index.html',

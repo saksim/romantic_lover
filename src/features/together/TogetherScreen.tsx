@@ -46,6 +46,7 @@ interface TogetherScreenProps {
   profile: CoupleProfile
   capsules: TimeCapsule[]
   completedCount: number
+  memoryCount: number
   photoCount: number
   answerCount: number
   customWishCount: number
@@ -68,7 +69,7 @@ interface TogetherScreenProps {
   onNotify: (message: string) => void
 }
 
-export function TogetherScreen({ profile, capsules, completedCount, photoCount, answerCount, customWishCount,
+export function TogetherScreen({ profile, capsules, completedCount, memoryCount, photoCount, answerCount, customWishCount,
   romanceEffects, secretUnlocked, isStandalone, canInstall, isIos, exportData, onSaveProfile, onAddCapsule,
   onOpenCapsule, onDeleteCapsule, onSetRomanceEffects, onInstall, onImport, onOpenSecret, onReopenGift,
   onCelebrateCapsule, onNotify }: TogetherScreenProps) {
@@ -118,6 +119,7 @@ export function TogetherScreen({ profile, capsules, completedCount, photoCount, 
         integrity: checksum ? { algorithm: 'SHA-256', value: checksum } : null,
         summary: {
           completedWishes: completedCount,
+          storyMemories: memoryCount,
           localPhotos: photoCount,
           dailyAnswers: answerCount,
           customWishes: customWishCount,
@@ -194,8 +196,8 @@ export function TogetherScreen({ profile, capsules, completedCount, photoCount, 
       </section>
 
       <div className="our-stats-grid">
-        <div><span aria-hidden="true">✓</span><strong>{completedCount}</strong><small>共同回忆</small></div>
-        <div><span aria-hidden="true">▧</span><strong>{photoCount}</strong><small>纪念照片</small></div>
+        <div><span aria-hidden="true">✦</span><strong>{memoryCount}</strong><small>故事回忆</small></div>
+        <div><span aria-hidden="true">✓</span><strong>{completedCount}</strong><small>成真愿望</small></div>
         <div><span aria-hidden="true">?</span><strong>{answerCount}</strong><small>认真回答</small></div>
         <div><span aria-hidden="true">✎</span><strong>{customWishCount}</strong><small>亲手愿望</small></div>
       </div>
@@ -235,7 +237,7 @@ export function TogetherScreen({ profile, capsules, completedCount, photoCount, 
         </div>
         <p className="data-vault__intro">把这台设备里的全部故事封装成一个可带走的 JSON 文件。它包含资料、愿望状态、回忆文字、照片、每日回答、时间胶囊与偏好设置。</p>
         <div className="data-vault__summary" aria-label="本次备份内容摘要">
-          <span><strong>{completedCount}</strong><small>回忆</small></span>
+          <span><strong>{memoryCount}</strong><small>故事回忆</small></span>
           <span><strong>{photoCount}</strong><small>照片</small></span>
           <span><strong>{answerCount}</strong><small>回答</small></span>
           <span><strong>{customWishCount}</strong><small>自定义愿望</small></span>

@@ -32,7 +32,7 @@ export function ModalShell({ title, eyebrow, children, onClose, size = 'normal' 
         <div className="modal-card__header">
           <div>
             {eyebrow && <p className="section-kicker">{eyebrow}</p>}
-            <h2 id="modal-title">{title}</h2>
+            <h2 id={titleId}>{title}</h2>
           </div>
           <button type="button" className="modal-close" onClick={onClose} aria-label="关闭">
             ×

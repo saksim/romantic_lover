@@ -5,7 +5,7 @@ interface BottomNavProps { activeView: AppView; onNavigate: (view: AppView) => v
 const items: Array<{ view: AppView; symbol: string; label: string }> = [
   { view: 'today', symbol: '☼', label: '今天' },
   { view: 'explore', symbol: '◇', label: '愿望' },
-  { view: 'collection', symbol: '♥', label: '收藏' },
+  { view: 'story', symbol: '✦', label: '故事' },
   { view: 'together', symbol: '∞', label: '我们' },
 ]
 
@@ -13,7 +13,8 @@ export function BottomNav({ activeView, onNavigate }: BottomNavProps) {
   return (
     <nav className="bottom-nav" aria-label="主要页面">
       {items.map((item) => {
-        const active = activeView === item.view
+        const active = activeView === item.view ||
+          (item.view === 'explore' && activeView === 'collection')
         return (
           <button type="button" className={`bottom-nav__item${active ? ' is-active' : ''}`} key={item.view}
             aria-current={active ? 'page' : undefined} onClick={() => onNavigate(item.view)}>
