@@ -89,12 +89,12 @@ img { display: block; max-width: 100%; }
 .visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0,0,0,0) !important; white-space: nowrap !important; border: 0 !important; }
 
 /* Modal and forms */
-.modal-overlay { position: fixed; z-index: 100; inset: 0; display: flex; align-items: flex-end; justify-content: center; padding-top: max(28px, env(safe-area-inset-top)); background: rgba(42,25,32,.58); animation: overlay-in .2s ease both; }
-.modal-card { width: min(100%, 560px); max-height: calc(100dvh - max(28px, env(safe-area-inset-top))); overflow: hidden; border: 1px solid rgba(255,255,255,.45); border-radius: 34px 34px 0 0; background: var(--paper); box-shadow: var(--shadow-modal); animation: modal-up .38s var(--spring) both; }
-.modal-card__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 23px 22px 15px; border-bottom: 1px solid var(--line); }
+.modal-overlay { position: fixed; z-index: 1000; inset: 0; display: flex; width: 100%; height: 100dvh; max-height: 100dvh; align-items: flex-end; justify-content: center; overflow: hidden; padding-top: max(28px, env(safe-area-inset-top)); background: rgba(42,25,32,.58); animation: overlay-in .2s ease both; }
+.modal-card { display: flex; width: min(100%, 560px); min-height: 0; max-height: 100%; flex-direction: column; overflow: hidden; border: 1px solid rgba(255,255,255,.45); border-radius: 34px 34px 0 0; background: var(--paper); box-shadow: var(--shadow-modal); animation: modal-up .38s var(--spring) both; }
+.modal-card__header { display: flex; flex: 0 0 auto; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 23px 22px 15px; border-bottom: 1px solid var(--line); }
 .modal-card__header h2 { margin-bottom: 0; font-family: "Iowan Old Style", "Songti SC", STSong, serif; font-size: 25px; line-height: 1.15; }
 .modal-close { display: grid; min-width: 44px; min-height: 44px; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); cursor: pointer; color: var(--muted); font-size: 24px; line-height: 1; }
-.modal-card__body { max-height: calc(100dvh - 118px); overflow-y: auto; padding: 20px 22px max(24px, env(safe-area-inset-bottom)); overscroll-behavior: contain; }
+.modal-card__body { min-height: 0; flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px 22px max(24px, env(safe-area-inset-bottom)); overscroll-behavior: contain; scroll-padding-bottom: max(24px, env(safe-area-inset-bottom)); touch-action: pan-y; }
 .romance-form { display: grid; gap: 19px; }
 .form-field { display: grid; min-width: 0; gap: 8px; margin: 0; padding: 0; border: 0; }
 .form-field > span, .form-field legend { color: var(--ink); font-size: 12px; font-weight: 750; }
@@ -130,8 +130,7 @@ img { display: block; max-width: 100%; }
   .app-content { padding-right: 24px; padding-left: 24px; }
   .bottom-nav { bottom: 24px; width: 512px; border: 1px solid var(--line); border-radius: 0 0 36px 36px; }
   .modal-overlay { align-items: center; padding: 24px; }
-  .modal-card { max-height: calc(100dvh - 48px); border-radius: 34px; }
-  .modal-card__body { max-height: calc(100dvh - 150px); }
+  .modal-card { border-radius: 34px; }
   .form-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .toast { bottom: 104px; }
 }
