@@ -1,0 +1,17 @@
+{
+  "name": "Future With You",
+  "short_name": "With You",
+  "description": "今天、愿望、回忆，以及我们还没写完的未来。",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f8efe8",
+  "theme_color": "#7f3f53",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
+
