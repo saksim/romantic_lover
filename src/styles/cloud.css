@@ -17,6 +17,14 @@
 .cloud-auth-tabs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 20px; padding: 5px; border-radius: 18px; background: var(--surface); }
 .cloud-auth-tabs button { min-height: 43px; border: 0; border-radius: 14px; background: transparent; color: var(--muted); cursor: pointer; font-size: 12px; font-weight: 750; }
 .cloud-auth-tabs button.is-active { background: var(--paper); box-shadow: var(--shadow-soft); color: var(--wine); }
+.cloud-captcha { display: grid; min-width: 0; gap: 8px; padding: 14px; border: 1px solid rgba(127,63,83,.14); border-radius: 18px; background: rgba(255,250,246,.7); }
+.cloud-captcha__widget { display: grid; max-width: 100%; min-height: 65px; place-items: center; overflow: hidden; }
+.cloud-captcha__loading { color: var(--muted); font-size: 10px; }
+.cloud-captcha__status { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.55; text-align: center; }
+.cloud-captcha.is-verified { border-color: rgba(82,119,107,.28); background: rgba(82,119,107,.08); }
+.cloud-captcha.is-verified .cloud-captcha__status { color: var(--success); font-weight: 750; }
+.cloud-captcha.is-error, .cloud-captcha.is-expired { border-color: rgba(164,77,88,.25); }
+.cloud-captcha-issue { margin: 0; padding: 11px 13px; border-radius: 15px; background: rgba(164,77,88,.1); color: var(--danger); font-size: 11px; line-height: 1.55; }
 .invite-code-input { font-family: ui-monospace, SFMono-Regular, Consolas, monospace !important; font-size: 21px !important; font-weight: 800; letter-spacing: .16em; text-align: center; text-transform: uppercase; }
 .cloud-member-list { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 9px; }
 .cloud-member-list > span { display: grid; min-width: 0; gap: 3px; padding: 14px 11px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,.42); text-align: center; }

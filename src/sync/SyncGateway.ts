@@ -16,6 +16,7 @@ export interface SignUpInput {
   identifier: string
   password: string
   displayName: string
+  captchaToken?: string
 }
 
 export interface SignUpResult {
@@ -26,6 +27,7 @@ export interface SignUpResult {
 export interface SignInInput {
   identifier: string
   password: string
+  captchaToken?: string
 }
 
 export interface AuthGateway {

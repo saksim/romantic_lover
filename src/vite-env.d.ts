@@ -10,6 +10,8 @@ interface ImportMetaEnv {
   readonly VITE_CLOUDBASE_REGION?: string
   readonly VITE_SUPABASE_URL?: string
   readonly VITE_SUPABASE_PUBLISHABLE_KEY?: string
+  readonly VITE_SUPABASE_CAPTCHA_PROVIDER?: 'hcaptcha' | 'turnstile'
+  readonly VITE_SUPABASE_CAPTCHA_SITE_KEY?: string
 }
 
 interface ImportMeta {

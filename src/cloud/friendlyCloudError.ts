@@ -40,6 +40,7 @@ function withDiagnostic(message: string, code: string, status?: number) {
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
   invalid_credentials: '邮箱或密码不正确。',
   email_not_confirmed: '请先打开邮箱里的验证链接，再回来登录。',
+  captcha_failed: '人机验证未完成、已经过期，或验证码供应商与 Site Key 配置不一致。请重新验证后再试。',
   email_address_not_authorized: '当前邮件服务不能向这个邮箱发送验证信。请由空间创建者完成邮件配置，或在 Alpha 测试阶段关闭邮箱确认。',
   over_email_send_rate_limit: '验证邮件发送额度暂时用完了，请稍后重试，或由空间创建者配置自定义邮件服务。',
   signup_disabled: '当前云端项目已关闭新账号注册，请由空间创建者重新开启。',

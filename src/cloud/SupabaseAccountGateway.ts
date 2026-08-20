@@ -106,6 +106,7 @@ export class SupabaseAccountGateway implements AuthGateway, CoupleGateway {
       options: {
         data: { display_name: input.displayName.trim() },
         emailRedirectTo: `${window.location.origin}/`,
+        captchaToken: input.captchaToken,
       },
     })
     if (error) throw error
@@ -119,6 +120,7 @@ export class SupabaseAccountGateway implements AuthGateway, CoupleGateway {
     const { data, error } = await this.client.auth.signInWithPassword({
       email: input.identifier.trim(),
       password: input.password,
+      options: { captchaToken: input.captchaToken },
     })
     if (error) throw error
     const session = mapSession(data.session)

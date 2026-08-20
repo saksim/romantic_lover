@@ -33,6 +33,17 @@ Alpha 2 只把账号、个人资料、情侣空间和绑定关系放到云端。
 - `over_email_send_rate_limit`：默认邮件额度已用完。等待限额恢复，或配置自定义 SMTP。
 - `unexpected_failure`：通常是 `auth.users` 触发器或数据库约束失败。到 Authentication → Logs 查看同一时间的错误，并核对 `future_with_you_profile_on_auth_user_created` 触发器。
 
+### CAPTCHA 人机验证
+
+Supabase 只负责校验 CAPTCHA token，不会自动在 React 页面生成验证码。后台与前端必须使用同一个供应商：`hcaptcha` 或 `turnstile`。
+
+1. 在 Supabase Authentication → Bot and Abuse Protection 中启用 CAPTCHA，选择供应商并保存该供应商的 **Secret Key**。
+2. 在 CAPTCHA 供应商后台，把 Vercel Preview 域名和正式域名加入允许列表。
+3. 在 Vercel Preview / Development 添加同一供应商名称和对应的公开 **Site Key**。
+4. Secret Key 只能留在 Supabase；不要放进 Git、`.env.local` 或任何 `VITE_*` 变量。
+
+`captcha_failed` 表示前端没有提交 token、token 已过期、域名不在供应商允许列表，或者 Supabase Secret Key 与前端 Site Key 不属于同一个 CAPTCHA 站点。
+
 不要为了绕过邮件问题把 `service_role` 或 SMTP 密码放进 Vercel 的 `VITE_*` 变量；所有 `VITE_*` 内容都会进入浏览器包。
 
 ## 3. 设置 Vercel Preview / Development
@@ -43,6 +54,8 @@ Alpha 2 只把账号、个人资料、情侣空间和绑定关系放到云端。
 VITE_BACKEND_PROVIDER=supabase
 VITE_SUPABASE_URL=<Project URL>
 VITE_SUPABASE_PUBLISHABLE_KEY=<sb_publishable_...>
+VITE_SUPABASE_CAPTCHA_PROVIDER=<hcaptcha 或 turnstile>
+VITE_SUPABASE_CAPTCHA_SITE_KEY=<公开 Site Key>
 ```
 
 浏览器中只能放 `sb_publishable_` key。不要添加 secret key、service role key 或数据库密码。Production 暂不设置 `VITE_BACKEND_PROVIDER`，因此线上 V0.4 继续使用本地模式。

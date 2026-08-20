@@ -1,5 +1,7 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { getCaptchaClientConfig } from '../cloud/captchaConfig'
 import type { CloudAccountController } from '../hooks/useCloudAccount'
+import { CaptchaChallenge } from './CaptchaChallenge'
 import { ModalShell } from './ModalShell'
 
 export type CloudDialogMode = 'auth' | 'create' | 'join' | 'profile'
@@ -36,10 +38,21 @@ function AuthModal({ account, onClose, onNotify, offerLocalMode }: Omit<CloudAcc
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [captchaToken, setCaptchaToken] = useState<string>()
+  const [captchaResetKey, setCaptchaResetKey] = useState(0)
+  const captchaConfig = useMemo(getCaptchaClientConfig, [])
+  const captchaPending = captchaConfig.enabled && !captchaToken
+  const submitDisabled = account.busy || Boolean(captchaConfig.issue) || captchaPending
+
+  const resetCaptcha = () => {
+    setCaptchaToken(undefined)
+    setCaptchaResetKey((current) => current + 1)
+  }
 
   const changeMode = (nextMode: 'sign-in' | 'sign-up') => {
     setAuthMode(nextMode)
     account.clearError()
+    resetCaptcha()
   }
   const continueLocally = () => {
     onNotify('已进入本地模式，云端登录入口仍在“我们”页面')
@@ -47,8 +60,10 @@ function AuthModal({ account, onClose, onNotify, offerLocalMode }: Omit<CloudAcc
   }
   const submit = async (event: FormEvent) => {
     event.preventDefault()
+    if (captchaConfig.issue || captchaPending) return
     if (authMode === 'sign-up') {
-      const result = await account.signUp({ identifier: email, password, displayName })
+      const result = await account.signUp({ identifier: email, password, displayName, captchaToken })
+      resetCaptcha()
       if (result === 'signed-in') {
         onNotify('账号已经创建，云端双人空间正在等你们')
         onClose()
@@ -58,7 +73,9 @@ function AuthModal({ account, onClose, onNotify, offerLocalMode }: Omit<CloudAcc
       }
       return
     }
-    if (await account.signIn({ identifier: email, password })) {
+    const signedIn = await account.signIn({ identifier: email, password, captchaToken })
+    resetCaptcha()
+    if (signedIn) {
       onNotify('欢迎回来，云端空间已经连接')
       onClose()
     }
@@ -74,8 +91,9 @@ function AuthModal({ account, onClose, onNotify, offerLocalMode }: Omit<CloudAcc
         {authMode === 'sign-up' && <label className="form-field"><span>你想被怎样称呼</span><input required autoFocus maxLength={40} autoComplete="nickname" value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder="例如：小宇" /></label>}
         <label className="form-field"><span>邮箱</span><input required autoFocus={authMode === 'sign-in'} type="email" inputMode="email" autoCapitalize="none" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" /></label>
         <label className="form-field"><span>密码</span><input required minLength={8} type="password" autoComplete={authMode === 'sign-in' ? 'current-password' : 'new-password'} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="至少 8 位" /></label>
+        <CaptchaChallenge config={captchaConfig} resetKey={captchaResetKey} onTokenChange={setCaptchaToken} />
         <ErrorMessage account={account} />
-        <button type="submit" className="primary-button form-submit" disabled={account.busy}><span>{account.busy ? '正在连接…' : authMode === 'sign-in' ? '登录云端空间' : '创建我的账号'}</span><span aria-hidden="true">♥</span></button>
+        <button type="submit" className="primary-button form-submit" disabled={submitDisabled}><span>{account.busy ? '正在连接…' : captchaConfig.issue ? '验证码配置待完成' : captchaPending ? '请先完成人机验证' : authMode === 'sign-in' ? '登录云端空间' : '创建我的账号'}</span><span aria-hidden="true">♥</span></button>
         <p className="form-note">账号只负责识别“你是谁”。本地愿望与回忆在 Alpha 3 迁移确认前不会自动上传，也不会被覆盖。</p>
         {offerLocalMode && <button type="button" className="cloud-local-mode-button" onClick={continueLocally}>暂时使用本地模式</button>}
       </form>

@@ -17,6 +17,9 @@ const packageMetadata = JSON.parse(read('package.json'))
 const app = read('src/app/App.tsx')
 const authModal = read('src/components/CloudAccountModal.tsx')
 const cloudErrors = read('src/cloud/friendlyCloudError.ts')
+const captchaConfig = read('src/cloud/captchaConfig.ts')
+const captchaChallenge = read('src/components/CaptchaChallenge.tsx')
+const syncContract = read('src/sync/SyncGateway.ts')
 
 for (const table of ['profiles', 'couples', 'couple_members', 'couple_invites']) {
   assert.match(migration, new RegExp(`alter table public\\.${table} enable row level security`, 'i'), `${table} must enable RLS.`)
@@ -45,8 +48,20 @@ assert(serviceWorker.includes(packageMetadata.version), 'The PWA cache must adva
 assert.match(app, /cloudWelcomeOpen[\s\S]*CloudAccountModal/, 'Cloud Preview must surface Auth after entering the gift.')
 assert.match(app, /sessionStorage/, 'The optional cloud welcome should only dismiss for the current browser session.')
 assert.match(authModal, /暂时使用本地模式/, 'Offline-first mode must remain available without forcing cloud login.')
+assert.match(authModal, /CaptchaChallenge/, 'Cloud Auth must render the configured CAPTCHA challenge.')
+assert.match(authModal, /captchaConfig\.enabled && !captchaToken/, 'Cloud Auth must wait for a CAPTCHA token before submission.')
+assert.equal((gateway.match(/captchaToken:\s*input\.captchaToken/g) ?? []).length, 2, 'Sign-up and sign-in must both forward CAPTCHA tokens.')
+assert.match(syncContract, /interface SignUpInput[\s\S]*captchaToken\?: string/, 'Sign-up input must carry a CAPTCHA token.')
+assert.match(syncContract, /interface SignInInput[\s\S]*captchaToken\?: string/, 'Sign-in input must carry a CAPTCHA token.')
+assert.match(captchaChallenge, /HCaptcha/, 'The frontend must support the hCaptcha provider.')
+assert.match(captchaChallenge, /Turnstile/, 'The frontend must support the Turnstile provider.')
+assert.match(captchaChallenge, /onExpire/, 'Expired CAPTCHA tokens must be cleared.')
+assert.match(captchaChallenge, /onError/, 'CAPTCHA loading or verification errors must be handled.')
+assert.match(captchaConfig, /VITE_SUPABASE_CAPTCHA_PROVIDER[\s\S]*VITE_SUPABASE_CAPTCHA_SITE_KEY/, 'CAPTCHA provider and public Site Key must come from environment config.')
+assert.doesNotMatch(`${captchaConfig}\n${captchaChallenge}\n${envExample}`, /VITE_[A-Z0-9_]*(?:SECRET|PRIVATE)/i, 'No CAPTCHA secret may enter browser environment variables.')
 
 for (const authErrorCode of [
+  'captcha_failed',
   'email_address_not_authorized',
   'over_email_send_rate_limit',
   'email_not_confirmed',
@@ -58,4 +73,4 @@ for (const authErrorCode of [
 assert.match(cloudErrors, /错误码：/, 'Unknown cloud failures must retain a safe diagnostic code.')
 assert.doesNotMatch(cloudErrors, /return raw|return message/, 'Raw provider or database errors must not be shown directly.')
 
-console.log('Alpha 2 security check passed for Auth, safe error diagnostics, profiles, couples, invites, browser key boundaries, and release branding.')
+console.log('Alpha 2 security check passed for Auth, CAPTCHA token forwarding, safe error diagnostics, profiles, couples, invites, browser key boundaries, and release branding.')

@@ -9,6 +9,7 @@ import { join } from 'node:path'
 
 const baseUrl = process.argv[2] ?? 'http://127.0.0.1:5173'
 const expectCloud = process.argv.includes('--expect-cloud')
+const expectCaptcha = process.argv.includes('--expect-captcha')
 const browserCandidates = [
   process.env.CHROME_PATH,
   'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
@@ -250,6 +251,25 @@ try {
       return Boolean(tab)
     })()`), '账号弹窗没有注册标签')
     await waitForValue(() => evaluate(`Boolean(document.querySelector('[role="dialog"] input[autocomplete="nickname"]'))`))
+    if (expectCaptcha) {
+      await waitForValue(
+        () => evaluate(`document.querySelector('.cloud-captcha')?.classList.contains('is-verified')`),
+        20_000,
+      )
+      const captchaReport = await evaluate(`(() => {
+        const challenge = document.querySelector('.cloud-captcha')
+        const submit = document.querySelector('[role="dialog"] button[type="submit"]')
+        return {
+          widgetMounted: Boolean(challenge?.querySelector('.cloud-captcha__widget')?.firstElementChild),
+          verified: challenge?.classList.contains('is-verified'),
+          submitEnabled: submit ? !submit.disabled : false,
+        }
+      })()`)
+      console.log(JSON.stringify({ alpha2Captcha: captchaReport }, null, 2))
+      assert.equal(captchaReport.widgetMounted, true, 'CAPTCHA 组件没有挂载到账号表单中')
+      assert.equal(captchaReport.verified, true, 'CAPTCHA 没有产生可提交的 token')
+      assert.equal(captchaReport.submitEnabled, true, 'CAPTCHA 成功后账号按钮仍不可提交')
+    }
     await client.send('Emulation.setDeviceMetricsOverride', {
       width: 390,
       height: 430,
@@ -305,10 +325,14 @@ try {
   })()`)
   assert(await evaluate(`(() => {
     const button = [...document.querySelectorAll('button')].find((item) => item.textContent.includes('下载完整备份'))
-    button?.scrollIntoView({ block: 'center' })
+    button?.scrollIntoView({ block: 'center', behavior: 'instant' })
     return Boolean(button)
   })()`), '没有找到“下载完整备份”按钮')
-  await new Promise((resolve) => setTimeout(resolve, 300))
+  await waitForValue(() => evaluate(`(() => {
+    const button = [...document.querySelectorAll('button')].find((item) => item.textContent.includes('下载完整备份'))
+    const rect = button?.getBoundingClientRect()
+    return Boolean(rect && rect.top >= 0 && rect.bottom <= innerHeight)
+  })()`))
   const backupButton = await evaluate(`(() => {
     const button = [...document.querySelectorAll('button')].find((item) => item.textContent.includes('下载完整备份'))
     const rect = button?.getBoundingClientRect()
