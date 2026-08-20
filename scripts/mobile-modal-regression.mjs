@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 const baseUrl = process.argv[2] ?? 'http://127.0.0.1:5173'
+const baseOrigin = new URL(baseUrl).origin
 const expectCloud = process.argv.includes('--expect-cloud')
 const expectCaptcha = process.argv.includes('--expect-captcha')
 const browserCandidates = [
@@ -101,7 +102,14 @@ try {
   const target = await waitForValue(async () => {
     const response = await fetch(`http://127.0.0.1:${port}/json/list`)
     const targets = await response.json()
-    return targets.find((candidate) => candidate.type === 'page' && candidate.url.startsWith(baseUrl))
+    return targets.find((candidate) => {
+      if (candidate.type !== 'page') return false
+      try {
+        return new URL(candidate.url).origin === baseOrigin
+      } catch {
+        return false
+      }
+    })
   })
 
   client = new CdpClient(target.webSocketDebuggerUrl)
@@ -126,7 +134,7 @@ try {
     return result.result.value
   }
 
-  await waitForValue(() => evaluate(`document.readyState === 'complete' && location.origin === new URL('${baseUrl}').origin`))
+  await waitForValue(() => evaluate(`document.readyState === 'complete' && location.origin === '${baseOrigin}'`))
   const openingVersion = await waitForValue(() => evaluate(`document.querySelector('.opening-letter__topline span:last-child')?.textContent`))
   assert.match(openingVersion, /^V0\.5/, '首屏没有显示当前 V0.5 版本')
   assert.doesNotMatch(openingVersion, /V0\.2/, '首屏仍显示已经过期的 V0.2 版本')
