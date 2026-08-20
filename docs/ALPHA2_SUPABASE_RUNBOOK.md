@@ -25,7 +25,15 @@ Alpha 2 只把账号、个人资料、情侣空间和绑定关系放到云端。
 
 在 Authentication → Sign In / Password policy 中把最短密码设为 8 位。
 
-Alpha 测试阶段可以暂时关闭邮箱确认，方便用两个测试账号完成绑定验证。正式公开注册前，需要先配置可靠 SMTP，再开启邮箱确认。
+本项目 Alpha 2 当前采用“关闭 Confirm email”的验收策略，注册成功后直接建立登录态，方便用两个测试账号完成绑定验证。正式公开注册前，需要先配置可靠 SMTP，再开启邮箱确认。
+
+### 注册错误排查
+
+- `email_address_not_authorized`：仍在使用 Supabase 默认邮件服务，而注册邮箱不是项目组织成员。Alpha 验收时，在 Authentication → Providers → Email 关闭 `Confirm email`；正式发布前配置自定义 SMTP 后再开启。
+- `over_email_send_rate_limit`：默认邮件额度已用完。等待限额恢复，或配置自定义 SMTP。
+- `unexpected_failure`：通常是 `auth.users` 触发器或数据库约束失败。到 Authentication → Logs 查看同一时间的错误，并核对 `future_with_you_profile_on_auth_user_created` 触发器。
+
+不要为了绕过邮件问题把 `service_role` 或 SMTP 密码放进 Vercel 的 `VITE_*` 变量；所有 `VITE_*` 内容都会进入浏览器包。
 
 ## 3. 设置 Vercel Preview / Development
 

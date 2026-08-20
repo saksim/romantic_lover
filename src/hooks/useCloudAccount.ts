@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { SupabaseAccountGateway } from '../cloud/SupabaseAccountGateway'
+import { friendlyCloudError } from '../cloud/friendlyCloudError'
 import { getSupabaseClientState } from '../cloud/supabaseClient'
 import type { AccountIdentity, CloudSession, CoupleInvite } from '../domain/cloud'
 import type { CoupleContext, CreateCoupleInput, SignInInput, SignUpInput } from '../sync/SyncGateway'
@@ -27,24 +28,6 @@ export interface CloudAccountController {
   joinWithInvite: (code: string) => Promise<boolean>
   createInvite: () => Promise<boolean>
   leaveCouple: () => Promise<boolean>
-}
-
-function friendlyCloudError(error: unknown) {
-  const raw = error instanceof Error ? error.message : '云端请求失败，请稍后再试。'
-  const message = raw.toLowerCase()
-  if (message.includes('invalid login credentials')) return '邮箱或密码不正确。'
-  if (message.includes('user already registered')) return '这个邮箱已经注册，可以直接登录。'
-  if (message.includes('email not confirmed')) return '请先打开邮箱里的验证链接，再回来登录。'
-  if (message.includes('password') && message.includes('least')) return '密码至少需要 8 位。'
-  if (message.includes('email rate limit')) return '验证邮件发送太频繁，请稍后再试。'
-  if (message.includes('already belongs')) return '这个账号已经加入了一个情侣空间。'
-  if (message.includes('leave the current couple')) return '请先退出当前情侣空间，再加入新的空间。'
-  if (message.includes('invalid or expired')) return '邀请码不正确或已经过期。'
-  if (message.includes('already has two')) return '这个情侣空间已经有两个人了。'
-  if (message.includes('authentication required')) return '登录状态已经失效，请重新登录。'
-  if (message.includes('failed to fetch') || message.includes('network')) return '网络暂时无法连接云端，本地内容仍然安全。'
-  if (message.includes('schema cache') || message.includes('could not find the table')) return '云端空间还没有完成初始化，请稍后再试。'
-  return '云端请求暂时未完成，请稍后再试。本地内容不会受到影响。'
 }
 
 export function useCloudAccount(): CloudAccountController {

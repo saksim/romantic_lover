@@ -16,6 +16,7 @@ const serviceWorker = read('public/sw.js')
 const packageMetadata = JSON.parse(read('package.json'))
 const app = read('src/app/App.tsx')
 const authModal = read('src/components/CloudAccountModal.tsx')
+const cloudErrors = read('src/cloud/friendlyCloudError.ts')
 
 for (const table of ['profiles', 'couples', 'couple_members', 'couple_invites']) {
   assert.match(migration, new RegExp(`alter table public\\.${table} enable row level security`, 'i'), `${table} must enable RLS.`)
@@ -45,4 +46,16 @@ assert.match(app, /cloudWelcomeOpen[\s\S]*CloudAccountModal/, 'Cloud Preview mus
 assert.match(app, /sessionStorage/, 'The optional cloud welcome should only dismiss for the current browser session.')
 assert.match(authModal, /暂时使用本地模式/, 'Offline-first mode must remain available without forcing cloud login.')
 
-console.log('Alpha 2 security check passed for Auth, profiles, couples, invites, browser key boundaries, and release branding.')
+for (const authErrorCode of [
+  'email_address_not_authorized',
+  'over_email_send_rate_limit',
+  'email_not_confirmed',
+  'weak_password',
+  'unexpected_failure',
+]) {
+  assert.match(cloudErrors, new RegExp(`\\b${authErrorCode}\\b`), `Auth error ${authErrorCode} must have a safe localized mapping.`)
+}
+assert.match(cloudErrors, /错误码：/, 'Unknown cloud failures must retain a safe diagnostic code.')
+assert.doesNotMatch(cloudErrors, /return raw|return message/, 'Raw provider or database errors must not be shown directly.')
+
+console.log('Alpha 2 security check passed for Auth, safe error diagnostics, profiles, couples, invites, browser key boundaries, and release branding.')
