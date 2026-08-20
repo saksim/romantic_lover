@@ -46,6 +46,7 @@ export interface CoupleMember {
   memberSlot: 1 | 2
   joinedAt: string
   leftAt?: string
+  displayName?: string
 }
 
 export interface CoupleInvite {

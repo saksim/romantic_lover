@@ -47,7 +47,9 @@ export function getBackendConfigurationProblems(config: BackendConfig = backendC
   if (config.provider === 'supabase') {
     return [
       !config.supabase.url ? 'VITE_SUPABASE_URL is required.' : '',
-      !config.supabase.publishableKey ? 'VITE_SUPABASE_PUBLISHABLE_KEY is required.' : '',
+      !config.supabase.publishableKey
+        ? 'VITE_SUPABASE_PUBLISHABLE_KEY is required.'
+        : !config.supabase.publishableKey.startsWith('sb_publishable_') ? 'Only an sb_publishable_ key is allowed in the browser.' : '',
     ].filter(Boolean)
   }
 

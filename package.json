@@ -1,7 +1,7 @@
 {
   "name": "future-with-you",
   "private": true,
-  "version": "0.5.0-dev.2",
+  "version": "0.5.0-dev.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,9 +9,12 @@
     "preview": "vite preview --host 0.0.0.0",
     "test:mobile": "node scripts/mobile-modal-regression.mjs",
     "generate:icons": "node scripts/generate-icons.mjs",
-    "test:v050": "node scripts/v050-foundation-check.mjs"
+    "test:v050": "node scripts/v050-foundation-check.mjs",
+    "test:alpha2": "node scripts/alpha2-security-check.mjs",
+    "test:alpha2:mobile": "node scripts/mobile-modal-regression.mjs http://127.0.0.1:4173 --expect-cloud"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

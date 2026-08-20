@@ -16,6 +16,7 @@ import { StoryScreen } from '../features/story/StoryScreen'
 import { HomeScreen } from '../features/today/HomeScreen'
 import { TogetherScreen } from '../features/together/TogetherScreen'
 import { ExploreScreen } from '../features/wishes/ExploreScreen'
+import { useCloudAccount } from '../hooks/useCloudAccount'
 import { usePwaInstall } from '../hooks/usePwaInstall'
 import { useWishProgress } from '../hooks/useWishProgress'
 import { daysSince } from '../utils/date'
@@ -26,6 +27,7 @@ interface CelebrationState { type: CelebrationType; nonce: number }
 export function App() {
   const appState = useWishProgress()
   const pwaInstall = usePwaInstall()
+  const cloudAccount = useCloudAccount()
   const [view, setView] = useState<AppView>(() => appState.state.hasOpened ? 'today' : 'opening')
   const [toast, setToast] = useState('')
   const [addWishOpen, setAddWishOpen] = useState(false)
@@ -167,7 +169,7 @@ export function App() {
         answerCount={Object.keys(appState.state.dailyAnswers).length} customWishCount={appState.state.customWishes.length}
         romanceEffects={appState.state.preferences.romanceEffects} secretUnlocked={appState.isSecretUnlocked}
         isStandalone={pwaInstall.isStandalone} canInstall={pwaInstall.canInstall} isIos={pwaInstall.isIos}
-        exportData={JSON.stringify(appState.state, null, 2)} onSaveProfile={appState.saveProfile}
+        cloudAccount={cloudAccount} exportData={JSON.stringify(appState.state, null, 2)} onSaveProfile={appState.saveProfile}
         onAddCapsule={appState.addCapsule} onOpenCapsule={appState.openCapsule} onDeleteCapsule={appState.deleteCapsule}
         onSetRomanceEffects={appState.setRomanceEffects} onInstall={pwaInstall.install} onImport={appState.importState}
         onOpenSecret={openSecret} onReopenGift={() => navigate('opening')} onCelebrateCapsule={() => celebrate('capsule')}

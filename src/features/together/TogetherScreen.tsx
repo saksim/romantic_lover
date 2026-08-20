@@ -1,7 +1,9 @@
 import { useRef, useState, type ChangeEvent } from 'react'
 import { CapsuleModal } from '../../components/CapsuleModal'
+import { CloudAccountPanel } from '../../components/CloudAccountPanel'
 import { ProfileModal } from '../../components/ProfileModal'
 import type { CoupleProfile, TimeCapsule } from '../../domain/wish'
+import type { CloudAccountController } from '../../hooks/useCloudAccount'
 import { daysSince, daysUntil, formatChineseDate } from '../../utils/date'
 
 const BACKUP_FORMAT = 'future-with-you.full-backup'
@@ -55,6 +57,7 @@ interface TogetherScreenProps {
   isStandalone: boolean
   canInstall: boolean
   isIos: boolean
+  cloudAccount: CloudAccountController
   exportData: string
   onSaveProfile: (profile: CoupleProfile) => void
   onAddCapsule: (capsule: Pick<TimeCapsule, 'title' | 'message' | 'openAt'>) => void
@@ -70,9 +73,9 @@ interface TogetherScreenProps {
 }
 
 export function TogetherScreen({ profile, capsules, completedCount, memoryCount, photoCount, answerCount, customWishCount,
-  romanceEffects, secretUnlocked, isStandalone, canInstall, isIos, exportData, onSaveProfile, onAddCapsule,
-  onOpenCapsule, onDeleteCapsule, onSetRomanceEffects, onInstall, onImport, onOpenSecret, onReopenGift,
-  onCelebrateCapsule, onNotify }: TogetherScreenProps) {
+  romanceEffects, secretUnlocked, isStandalone, canInstall, isIos, cloudAccount, exportData, onSaveProfile,
+  onAddCapsule, onOpenCapsule, onDeleteCapsule, onSetRomanceEffects, onInstall, onImport, onOpenSecret,
+  onReopenGift, onCelebrateCapsule, onNotify }: TogetherScreenProps) {
   const [profileOpen, setProfileOpen] = useState(false)
   const [capsuleOpen, setCapsuleOpen] = useState(false)
   const [expandedCapsule, setExpandedCapsule] = useState<string | null>(null)
@@ -194,6 +197,8 @@ export function TogetherScreen({ profile, capsules, completedCount, memoryCount,
         <div className="couple-profile-card__days"><strong>{togetherDays ?? '∞'}</strong><span>{togetherDays ? `从 ${formatChineseDate(profile.anniversaryDate)} 开始` : '填写纪念日，开始记录共同天数'}</span></div>
         <button type="button" className="light-button" onClick={() => setProfileOpen(true)}>编辑我们的资料</button>
       </section>
+
+      <CloudAccountPanel account={cloudAccount} onNotify={onNotify} />
 
       <div className="our-stats-grid">
         <div><span aria-hidden="true">✦</span><strong>{memoryCount}</strong><small>故事回忆</small></div>

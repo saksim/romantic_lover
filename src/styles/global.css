@@ -2,6 +2,7 @@
 @import './today.css';
 @import './effects.css';
 @import './story.css';
+@import './cloud.css';
 
 :root {
   font-family: "SF Pro Display", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
@@ -123,6 +124,10 @@ img { display: block; max-width: 100%; }
 
 @keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes modal-up { from { opacity: 0; transform: translateY(40px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+@media (max-width: 39.99rem) {
+  .form-field input:not([type="file"]), .form-field textarea { font-size: 16px; }
+}
 
 @media (min-width: 40rem) {
   .app-frame { min-height: calc(100dvh - 48px); margin-top: 24px; margin-bottom: 24px; border-radius: 40px; box-shadow: 22px 28px 60px rgba(74,43,53,.17); }

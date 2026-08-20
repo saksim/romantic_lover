@@ -1,4 +1,5 @@
 import type {
+  AccountIdentity,
   CloudSession,
   CoupleInvite,
   CoupleMember,
@@ -17,6 +18,11 @@ export interface SignUpInput {
   displayName: string
 }
 
+export interface SignUpResult {
+  session: CloudSession | null
+  confirmationRequired: boolean
+}
+
 export interface SignInInput {
   identifier: string
   password: string
@@ -24,10 +30,12 @@ export interface SignInInput {
 
 export interface AuthGateway {
   getSession(): Promise<CloudSession | null>
-  signUp(input: SignUpInput): Promise<CloudSession>
+  signUp(input: SignUpInput): Promise<SignUpResult>
   signIn(input: SignInInput): Promise<CloudSession>
   signOut(): Promise<void>
   onSessionChange(listener: (session: CloudSession | null) => void): () => void
+  getProfile(): Promise<AccountIdentity | null>
+  updateProfile(displayName: string): Promise<AccountIdentity>
 }
 
 export interface CreateCoupleInput {

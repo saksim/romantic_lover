@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 const baseUrl = process.argv[2] ?? 'http://127.0.0.1:5173'
+const expectCloud = process.argv.includes('--expect-cloud')
 const browserCandidates = [
   process.env.CHROME_PATH,
   'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
@@ -220,6 +221,68 @@ try {
     return Boolean(button)
   })()`), '没有找到“我们”导航按钮')
   await waitForValue(() => evaluate(`Boolean([...document.querySelectorAll('button')].find((item) => item.textContent.includes('编辑我们的资料')))`))
+
+  if (expectCloud) {
+    assert(await waitForValue(() => evaluate(`(() => {
+      const button = [...document.querySelectorAll('button')].find((item) => item.textContent.includes('登录或创建账号'))
+      button?.scrollIntoView({ block: 'center' })
+      button?.click()
+      return Boolean(button)
+    })()`)), '云端模式下没有找到账号入口')
+    await waitForValue(() => evaluate(`Boolean(document.querySelector('[role="dialog"]')?.textContent.includes('云端空间'))`))
+    assert(await evaluate(`(() => {
+      const tab = [...document.querySelectorAll('[role="tab"]')].find((item) => item.textContent.includes('注册'))
+      tab?.click()
+      return Boolean(tab)
+    })()`), '账号弹窗没有注册标签')
+    await waitForValue(() => evaluate(`Boolean(document.querySelector('[role="dialog"] input[autocomplete="nickname"]'))`))
+    await client.send('Emulation.setDeviceMetricsOverride', {
+      width: 390,
+      height: 430,
+      deviceScaleFactor: 1,
+      mobile: true,
+    })
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    const cloudModalReport = await evaluate(`(() => {
+      const overlay = document.querySelector('.modal-overlay')
+      const dialog = document.querySelector('[role="dialog"]')
+      const body = dialog?.querySelector('.modal-card__body')
+      const submit = dialog?.querySelector('button[type="submit"]')
+      const email = dialog?.querySelector('input[type="email"]')
+      if (body) body.scrollTop = body.scrollHeight
+      const dialogRect = dialog?.getBoundingClientRect()
+      const submitRect = submit?.getBoundingClientRect()
+      return {
+        viewportHeight: visualViewport?.height ?? innerHeight,
+        overlayIsBodyChild: overlay?.parentElement === document.body,
+        dialogTop: dialogRect?.top,
+        dialogBottom: dialogRect?.bottom,
+        bodyClientHeight: body?.clientHeight,
+        bodyScrollHeight: body?.scrollHeight,
+        submitTop: submitRect?.top,
+        submitBottom: submitRect?.bottom,
+        fieldCount: dialog?.querySelectorAll('.form-field').length,
+        inputFontSize: email ? parseFloat(getComputedStyle(email).fontSize) : 0,
+      }
+    })()`)
+    console.log(JSON.stringify({ alpha2CloudModal: cloudModalReport }, null, 2))
+    assert.equal(cloudModalReport.overlayIsBodyChild, true, '账号弹窗没有挂载到 body')
+    assert.equal(cloudModalReport.fieldCount, 3, '注册表单字段不完整')
+    assert(cloudModalReport.dialogTop >= 0, '账号弹窗顶部超出手机可视区')
+    assert(cloudModalReport.dialogBottom <= cloudModalReport.viewportHeight + 1, '账号弹窗底部超出手机可视区')
+    assert(cloudModalReport.bodyScrollHeight >= cloudModalReport.bodyClientHeight, '账号表单没有可控滚动区域')
+    assert(cloudModalReport.submitTop >= 0 && cloudModalReport.submitBottom <= cloudModalReport.viewportHeight + 1, '账号表单提交按钮不可见')
+    assert(cloudModalReport.inputFontSize >= 16, '手机输入框字号会触发 iOS 自动缩放')
+    await evaluate(`document.querySelector('.modal-close')?.click()`)
+    await waitForValue(() => evaluate(`!document.querySelector('[role="dialog"]')`))
+    await client.send('Emulation.setDeviceMetricsOverride', {
+      width: 390,
+      height: 844,
+      deviceScaleFactor: 1,
+      mobile: true,
+    })
+  }
+
   await evaluate(`(() => {
     const originalCreateObjectURL = URL.createObjectURL.bind(URL)
     URL.createObjectURL = (blob) => { window.__capturedBackupBlob = blob; return originalCreateObjectURL(blob) }

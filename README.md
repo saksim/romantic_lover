@@ -2,9 +2,11 @@
 
 Future With You 是一份可以装进手机里的情侣礼物。V0.4.0 把原有的愿望、约会灵感、每日问答和时间胶囊，扩展成一套会持续生长的“共同故事宇宙”。
 
-> `main` 当前是已发布的 V0.4.0；`dev` 已进入 `0.5.0-dev.2`。V0.5 将在不破坏本地模式的前提下加入账号、情侣空间、云端同步、对象存储和离线队列。完整设计见 [V0.5.0 双人云端版架构](docs/V0.5.0_ARCHITECTURE.md)。
+> `main` 当前是已发布的 V0.4.0；`dev` 已进入 `0.5.0-dev.3`（Alpha 2）。当前实现 Supabase 注册登录、个人资料、情侣空间与一次性邀请码；本地故事迁移仍留在 Alpha 3。完整设计见 [V0.5.0 双人云端版架构](docs/V0.5.0_ARCHITECTURE.md)。
 
 V0.5 当前优先打通 Vercel Preview / Production 与 Supabase；CloudBase 和中国大陆镜像延后评估。Vercel 负责发布前端，Supabase 负责账号、数据库、对象存储和实时事件。
+
+Alpha 2 的数据库迁移、Auth 设置和双设备验收步骤见 [Supabase 开通清单](docs/ALPHA2_SUPABASE_RUNBOOK.md)。
 
 ## 怎么交给她
 
