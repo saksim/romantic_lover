@@ -22,6 +22,10 @@ export interface SignUpInput {
 export interface SignUpResult {
   session: CloudSession | null
   confirmationRequired: boolean
+  verification?: {
+    kind: 'email-link' | 'email-otp'
+    destination: string
+  }
 }
 
 export interface SignInInput {
@@ -33,6 +37,8 @@ export interface SignInInput {
 export interface AuthGateway {
   getSession(): Promise<CloudSession | null>
   signUp(input: SignUpInput): Promise<SignUpResult>
+  verifySignUp?(code: string): Promise<CloudSession>
+  cancelSignUpVerification?(): void
   signIn(input: SignInInput): Promise<CloudSession>
   signOut(): Promise<void>
   onSessionChange(listener: (session: CloudSession | null) => void): () => void

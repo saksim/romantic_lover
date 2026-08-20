@@ -39,8 +39,23 @@ function withDiagnostic(message: string, code: string, status?: number) {
 
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
   invalid_credentials: '邮箱或密码不正确。',
+  invalid_password: '邮箱或密码不正确。',
+  not_found: '这个邮箱还没有账号，请先注册。',
+  invalid_argument: '邮箱验证码不正确、已经过期，或与本次注册不匹配。',
   email_not_confirmed: '请先打开邮箱里的验证链接，再回来登录。',
   captcha_failed: '人机验证未完成、已经过期，或验证码供应商与 Site Key 配置不一致。请重新验证后再试。',
+  captcha_required: '需要先完成人机验证，请在当前弹层输入图片验证码。',
+  captcha_invalid: '图片验证码不正确或已经过期，请刷新后重试。',
+  captcha_cancelled: '本次人机验证已经取消，可以重新提交。',
+  gateway_unavailable: 'CloudBase 组件没有成功加载。请重新连接云端；如果仍失败，请检查静态资源是否完整发布。',
+  request_timeout: 'CloudBase 身份认证在限定时间内没有响应。请检查当前网址是否已加入安全域名，并分别用手机流量与 Wi-Fi 重试。',
+  request_cancelled: '本次云端请求已经取消，请重新提交。',
+  unreachable: '暂时无法连接云端，请检查网络后重试；本地内容仍然安全。',
+  permission_denied: '当前域名或账号没有访问云端的权限，请由空间创建者检查 CloudBase 安全域名和 RLS。',
+  resource_exhausted: '验证码或登录请求过于频繁，请稍后再试。',
+  user_pending: '账号尚未激活，请先完成邮箱验证。',
+  user_blocked: '这个账号暂时不可用，请联系空间创建者检查账号状态。',
+  invalid_status: '密码重试次数过多，请稍后再试。',
   email_address_not_authorized: '当前邮件服务不能向这个邮箱发送验证信。请由空间创建者完成邮件配置，或在 Alpha 测试阶段关闭邮箱确认。',
   over_email_send_rate_limit: '验证邮件发送额度暂时用完了，请稍后重试，或由空间创建者配置自定义邮件服务。',
   signup_disabled: '当前云端项目已关闭新账号注册，请由空间创建者重新开启。',
@@ -67,6 +82,9 @@ export function friendlyCloudError(error: unknown) {
   if (message.includes('password') && message.includes('least')) return '密码至少需要 8 位。'
   if (message.includes('email rate limit')) {
     return withDiagnostic(AUTH_ERROR_MESSAGES.over_email_send_rate_limit, 'over_email_send_rate_limit', status)
+  }
+  if (message.includes('inconsistent couple membership')) {
+    return '检测到一条未正确结束的旧情侣空间记录。请不要重复创建，并联系空间维护者执行只读检查后修复。'
   }
   if (message.includes('already belongs')) return '这个账号已经加入了一个情侣空间。'
   if (message.includes('leave the current couple')) return '请先退出当前情侣空间，再加入新的空间。'

@@ -1,0 +1,46 @@
+name: Alpha 3 quality gate
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - dev
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alpha3-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: V0.5 foundation regression
+        run: npm run test:v050
+
+      - name: Alpha 2 security regression
+        run: npm run test:alpha2
+
+      - name: Alpha 3 mainland regression
+        run: npm run test:alpha3
+
+      - name: Production build
+        run: npm run build
