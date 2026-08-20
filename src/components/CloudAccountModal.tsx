@@ -138,7 +138,7 @@ function CreateSpaceModal({ account, onClose, onNotify }: Omit<CloudAccountModal
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     if (await account.createCouple({ name, greeting })) {
-      onNotify('情侣空间已经创建，现在可以邀请她加入')
+      onNotify('情侣空间已经准备好，现在可以邀请她加入')
       onClose()
     }
   }

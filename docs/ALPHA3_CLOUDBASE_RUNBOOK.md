@@ -23,11 +23,13 @@ Alpha 3 的目标是验证中国大陆链路，不是立刻搬运私人故事。
 2. 在数据库管理界面按顺序执行：
    - `backend/cloudbase-pg/migrations/0001_v050_foundation.sql`
    - `backend/cloudbase-pg/migrations/0002_alpha3_mainland_auth_hardening.sql`
+   - `backend/cloudbase-pg/migrations/0003_alpha3_idempotent_couple_creation.sql`
 3. 在身份认证中启用邮箱密码注册与登录。CloudBase 注册会向邮箱发送一次性验证码，网页再调用 `verifyOtp` 完成账号创建。
 4. 创建浏览器可用的 **Publishable Key**。Secret Key、管理员密钥和服务端密钥不得进入 Git、CloudBase 构建变量或任何 `VITE_*` 变量。
 5. 静态托管部署成功并取得实际网址后，到“环境配置 → 安全来源 → 安全域名”确认默认域名已自动加入；若没有，只添加不含 `https://` 和路径的主机名。未来正式域名和需要验收的 Vercel 精确域名应分别添加，不使用宽泛通配符。
 
 `0002` 不能省略：CloudBase PostgREST 的 RPC 暴露不能只依赖 `GRANT EXECUTE`，所以四个高权限情侣操作都会在函数内部再次检查已验证 JWT 的 `authenticated` 角色。
+`0003` 不能省略：它将“创建情侣空间”变为幂等操作，并按账号串行化请求；写入成功但响应丢失、请求超时或手机连续点击时，会恢复同一个空间而不是误报“已经加入”。
 
 ## 3. 配置前端构建变量
 

@@ -2,7 +2,7 @@
 
 Future With You 是一份可以装进手机里的情侣礼物。V0.4.0 把原有的愿望、约会灵感、每日问答和时间胶囊，扩展成一套会持续生长的“共同故事宇宙”。
 
-> `main` 当前包含已验证的 `0.5.0-dev.6`（Alpha 2 海外基线）；`dev` 已进入 `0.5.0-dev.8`（Alpha 3 中国大陆链路）。Alpha 3 为同一套账号、资料、情侣空间和一次性邀请码增加 CloudBase PG 适配；本地故事不会在本阶段上传。完整设计见 [V0.5.0 双人云端版架构](docs/V0.5.0_ARCHITECTURE.md)。
+> `main` 当前包含已验证的 `0.5.0-dev.6`（Alpha 2 海外基线）；`dev` 已进入 `0.5.0-dev.9`（Alpha 3 中国大陆链路）。Alpha 3 为同一套账号、资料、情侣空间和一次性邀请码增加 CloudBase PG 适配；本地故事不会在本阶段上传。完整设计见 [V0.5.0 双人云端版架构](docs/V0.5.0_ARCHITECTURE.md)。
 
 V0.5 使用同一份 React PWA 支持两个部署入口：Vercel + Supabase 是海外基线，CloudBase 静态托管 + CloudBase PG 是大陆候选。每个构建只能选择一个权威后端，绝不跨云双写。
 

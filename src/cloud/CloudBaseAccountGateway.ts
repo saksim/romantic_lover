@@ -85,6 +85,31 @@ function throwResponseError(response: unknown) {
   if (isRecord(response) && response.error) throw response.error
 }
 
+function cloudErrorText(error: unknown) {
+  if (typeof error === 'string') return error.toLowerCase()
+  if (!isRecord(error)) return ''
+  const message = [error.message, error.error_description, error.details]
+    .filter((value): value is string => typeof value === 'string')
+    .join(' ')
+  return message.toLowerCase()
+}
+
+function isAlreadyActiveCoupleError(error: unknown) {
+  return cloudErrorText(error).includes('already belongs to an active couple')
+}
+
+function shouldReconcileCoupleCreation(error: unknown) {
+  if (isAlreadyActiveCoupleError(error)) return true
+  if (!isRecord(error)) return false
+  const code = typeof error.code === 'string' ? error.code.toLowerCase() : ''
+  return [
+    'request_timeout',
+    'request_cancelled',
+    'unreachable',
+    '23505',
+  ].includes(code) || cloudErrorText(error).includes('one_active_couple')
+}
+
 function userId(user: CloudBaseUserLike) {
   const value = user.ID || user.id || user.uid || user.sub
   if (!value) throw new Error('CloudBase user response did not contain an ID.')
@@ -327,12 +352,28 @@ export class CloudBaseAccountGateway implements AuthGateway, CoupleGateway {
     }
   }
 
+  private async reconcileCommittedCouple(error: unknown): Promise<CoupleContext> {
+    if (!shouldReconcileCoupleCreation(error)) throw error
+    try {
+      const existingContext = await this.getActiveCouple()
+      if (existingContext) return existingContext
+    } catch {
+      // Preserve the mutation error when the reconciliation read also fails.
+    }
+    throw error
+  }
+
   async createCouple(input: CreateCoupleInput): Promise<CoupleContext> {
-    const response = await this.db.rpc('create_couple_space', {
-      space_name: input.name.trim(),
-      space_greeting: input.greeting.trim(),
-    })
-    throwResponseError(response)
+    let response: CloudBaseRpcResult
+    try {
+      response = await this.db.rpc('create_couple_space', {
+        space_name: input.name.trim(),
+        space_greeting: input.greeting.trim(),
+      })
+    } catch (error) {
+      return this.reconcileCommittedCouple(error)
+    }
+    if (response.error) return this.reconcileCommittedCouple(response.error)
     const context = await this.getActiveCouple()
     if (!context) throw new Error('The couple space was created but could not be loaded.')
     return context

@@ -1,4 +1,4 @@
-# V0.5.0-dev.8 — Alpha 3 中国大陆候选
+# V0.5.0-dev.9 — Alpha 3 中国大陆候选
 
 状态：Draft / `dev → main` PR 候选
 范围：账号、个人资料、情侣空间、一次性邀请码和大陆部署链路
@@ -11,6 +11,8 @@
 - CloudBase 风控要求验证码时，会在现有手机弹窗内呈现图片验证码，可刷新并完成验证。
 - CloudBase 自定义验证码适配器现在同时保留有界 Web 请求、浏览器存储和 WebSocket 能力；Auth 请求不会再无限等待。
 - 云端动态模块未加载成功时，注册入口会被阻止并提供重新连接；邮箱验证码请求会显示明确进度和超时错误。
+- 情侣空间创建现在具备服务端幂等锁；超时、丢失响应或连续点击后重试会返回已创建空间，不再误报“已经加入”。
+- 客户端会恢复旧 RPC 已成功写入的空间，并以同步操作锁阻止同一设备重复提交。
 - 个人资料、创建情侣空间、生成一次性邀请码、加入和退出均由 CloudBase PG 网关实现。
 - 高权限情侣 RPC 在函数内部验证 JWT `authenticated` 角色，避免 CloudBase PostgREST RPC 绕过 `GRANT EXECUTE` 的风险。
 - `dev` 只对应测试部署，`main` 只在 PR 评审与人工批准后进入正式发布。
@@ -35,7 +37,7 @@ CloudBase SDK 仅在 `VITE_BACKEND_PROVIDER=cloudbase-pg` 时动态下载。默�
 - `npm run build`
 - `npm run test:alpha2:mobile`（使用隔离的 Preview / 本地预览，不执行注册写入）
 
-真实 CloudBase 双设备验收需要先按 [CloudBase 开通清单](ALPHA3_CLOUDBASE_RUNBOOK.md)配置测试环境、Publishable Key、安全域名并执行两份 SQL 迁移。
+真实 CloudBase 双设备验收需要先按 [CloudBase 开通清单](ALPHA3_CLOUDBASE_RUNBOOK.md)配置测试环境、Publishable Key、安全域名并执行三份 SQL 迁移。
 
 ## 回滚
 

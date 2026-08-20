@@ -42,6 +42,7 @@ export function useCloudAccount(): CloudAccountController {
   const gatewayBootstrap = useMemo(getAccountGatewayBootstrapState, [])
   const [gateway, setGateway] = useState<AccountGateway | null>(null)
   const mounted = useRef(true)
+  const operationInFlight = useRef(false)
   const [loading, setLoading] = useState(gatewayBootstrap.enabled && !gatewayBootstrap.issue)
   const [busy, setBusy] = useState(false)
   const [session, setSession] = useState<CloudSession | null>(null)
@@ -140,6 +141,8 @@ export function useCloudAccount(): CloudAccountController {
   }, [gateway, gatewayBootstrap.enabled, gatewayBootstrap.issue, refresh])
 
   const run = useCallback(async (action: () => Promise<void>) => {
+    if (operationInFlight.current) return false
+    operationInFlight.current = true
     setBusy(true)
     setError(undefined)
     try {
@@ -151,6 +154,7 @@ export function useCloudAccount(): CloudAccountController {
       return false
     } finally {
       setBusy(false)
+      operationInFlight.current = false
     }
   }, [refresh])
 

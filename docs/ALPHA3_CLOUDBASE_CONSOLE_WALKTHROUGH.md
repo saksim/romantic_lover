@@ -68,7 +68,7 @@ VITE_CLOUDBASE_REGION=ap-shanghai
 
 通过标准：环境 ID、数据库、身份认证、Publishable Key 和静态托管都属于同一个上海环境。
 
-## 第 2 步：只读确认两份 SQL 已经执行成功
+## 第 2 步：只读确认三份 SQL 已经执行成功
 
 进入“PostgreSQL 数据库”或“数据库管理”，打开 SQL 编辑器。先运行下面这段只读检查，它不会修改或删除数据：
 
@@ -81,20 +81,24 @@ select
   to_regprocedure('public.create_couple_space(text,text)') is not null as create_space_ok,
   to_regprocedure('public.create_couple_invite(uuid)') is not null as create_invite_ok,
   to_regprocedure('public.join_couple_by_code(text)') is not null as join_invite_ok,
-  to_regprocedure('public.leave_couple_space(uuid)') is not null as leave_space_ok;
+  to_regprocedure('public.leave_couple_space(uuid)') is not null as leave_space_ok,
+  coalesce(pg_get_functiondef(to_regprocedure('public.create_couple_space(text,text)')) like '%pg_advisory_xact_lock%', false) as idempotent_create_ok;
 ```
 
-期望结果：一行结果中的八列全部为 `true`。
+期望结果：一行结果中的九列全部为 `true`。
 
-- 全部为 `true`：继续第 3 步，不要重复执行迁移。
-- 任一列为 `false`：按顺序执行仓库中的两份完整 SQL 文件：
+- 九列全部为 `true`：继续第 3 步，不要重复执行迁移。
+- 只有最后一列 `idempotent_create_ok` 为 `false`：只执行 `0003_alpha3_idempotent_couple_creation.sql`。
+- 如果这是全新的空环境且前八列存在 `false`，按顺序执行仓库中的三份完整 SQL 文件：
   1. `backend/cloudbase-pg/migrations/0001_v050_foundation.sql`
   2. `backend/cloudbase-pg/migrations/0002_alpha3_mainland_auth_hardening.sql`
+  3. `backend/cloudbase-pg/migrations/0003_alpha3_idempotent_couple_creation.sql`
+- 如果已有数据的环境前八列存在 `false`：停止并反馈结果，不要重新运行 `0001` 或删除表。
 - 出现红色错误：停止，不要执行 `DROP TABLE`、`TRUNCATE` 或删除环境；只记录错误码、错误文字和失败行号。
 
-若执行者无法打开 GitHub，由项目维护者把这两个 `.sql` 文件单独发给她。不要通过截图复制 SQL，也不要只复制文件的一部分。
+若执行者无法打开 GitHub，由项目维护者把这三个 `.sql` 文件单独发给她。不要通过截图复制 SQL，也不要只复制文件的一部分。
 
-通过标准：八个检查项全部为 `true`。
+通过标准：九个检查项全部为 `true`。
 
 ## 第 3 步：确认邮箱注册与登录已启用
 
@@ -263,9 +267,10 @@ https://romantic-lover-example.tcloudbaseapp.com/login
 | 页面显示“本地安全模式” | 四个 `VITE_*` 变量缺失或拼错 | 逐项对照填值表，重新构建；仅刷新不会改变已编译变量 |
 | `cors permission denied` / `permission_denied` | 当前网址没有加入安全域名 | 按第 6 步添加纯主机名，等待最多 10 分钟 |
 | Key 无效或初始化失败 | 误用了 API Key、Key 属于另一个环境或粘贴不完整 | 重新从当前环境复制 Publishable Key，绝不使用管理员 API Key |
-| 点击“创建我的账号”后一直等待 | 页面仍在运行 dev.7 的旧请求适配器，或 Auth 接口 / CORS 没有响应 | 部署 `0.5.0-dev.8`，用无痕窗口重试；根据 `request_timeout`、`gateway_unavailable` 或其他错误码继续排查 |
+| 点击“创建我的账号”后一直等待 | 页面仍在运行 dev.7 的旧请求适配器，或 Auth 接口 / CORS 没有响应 | 部署 `0.5.0-dev.9`，用无痕窗口重试；根据 `request_timeout`、`gateway_unavailable` 或其他错误码继续排查 |
 | 注册后收不到验证码 | 邮箱登录未开启、发件人未配置、邮件被拦截或触发频控 | 检查身份认证和垃圾箱；60 秒后再试；必要时配置国内可投递 SMTP |
-| 创建空间 / 邀请时报 401、403 或 RPC 不存在 | SQL 未完整执行、`0002` 未执行或会话未登录 | 运行第 2 步只读检查；不要删除表重来 |
+| 创建空间 / 邀请时报 401、403 或 RPC 不存在 | SQL 未完整执行、`0002` / `0003` 未执行或会话未登录 | 运行第 2 步只读检查；不要删除表重来 |
+| 首次创建却提示“账号已经加入情侣空间” | 前一次请求已在数据库提交，但响应丢失、超时或被双击重复提交 | 执行 `0003` 并部署 `0.5.0-dev.9`；刷新后再次创建会恢复原空间，不要删除成员记录 |
 | 图片验证码没有出现 | 未触发风控，或页面版本不是 Alpha 3 | 正常注册不一定触发验证码；只有 CloudBase 风控要求时才显示 |
 | 默认网址可开但自定义域名不可开 | DNS、证书或备案尚未完成 | Alpha 3 先用默认网址验收，自定义域名留到正式阶段 |
 
@@ -288,7 +293,7 @@ https://romantic-lover-example.tcloudbaseapp.com/login
 部署状态：成功 / 失败
 CloudBase 默认网址：...
 页面显示：Alpha 3 · CloudBase 大陆云 / 其他
-SQL 八项检查：全部 true / 哪一项 false
+SQL 九项检查：全部 true / 哪一项 false
 验收完成到：第 ... 步
 错误码或 Request ID：...
 构建日志最后 30 行：...

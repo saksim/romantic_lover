@@ -83,6 +83,9 @@ export function friendlyCloudError(error: unknown) {
   if (message.includes('email rate limit')) {
     return withDiagnostic(AUTH_ERROR_MESSAGES.over_email_send_rate_limit, 'over_email_send_rate_limit', status)
   }
+  if (message.includes('inconsistent couple membership')) {
+    return '检测到一条未正确结束的旧情侣空间记录。请不要重复创建，并联系空间维护者执行只读检查后修复。'
+  }
   if (message.includes('already belongs')) return '这个账号已经加入了一个情侣空间。'
   if (message.includes('leave the current couple')) return '请先退出当前情侣空间，再加入新的空间。'
   if (message.includes('invalid or expired')) return '邀请码不正确或已经过期。'
