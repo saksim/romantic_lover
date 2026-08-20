@@ -1,0 +1,49 @@
+.cloud-space-card { display: grid; gap: 16px; margin-top: 20px; padding: 24px; border: 1px solid rgba(127,63,83,.13); border-radius: 30px; background: linear-gradient(145deg, rgba(255,250,246,.98), rgba(244,226,224,.92)); box-shadow: var(--shadow-card); }
+.cloud-space-card.is-connected { background: radial-gradient(circle at 92% 5%, rgba(214,120,121,.22), transparent 34%), linear-gradient(145deg, rgba(255,250,246,.98), rgba(239,216,218,.94)); }
+.cloud-space-card--local { background: linear-gradient(145deg, var(--paper), var(--surface)); }
+.cloud-space-card--warning { border-color: rgba(164,77,88,.34); }
+.cloud-space-card__heading { display: flex; align-items: center; gap: 13px; }
+.cloud-space-card__heading > span { display: grid; width: 49px; height: 49px; flex: 0 0 auto; place-items: center; border-radius: 18px; background: var(--wine); box-shadow: 6px 8px 18px rgba(95,44,62,.22), inset 2px 2px 5px rgba(255,255,255,.18); color: #fff9f5; font-family: Georgia, serif; font-size: 25px; }
+.cloud-space-card__heading h2 { margin-bottom: 0; font-family: "Iowan Old Style", "Songti SC", STSong, serif; font-size: 22px; line-height: 1.2; }
+.cloud-space-card > p { margin-bottom: 0; color: var(--muted); font-size: 12px; line-height: 1.75; }
+.cloud-status-pill { justify-self: start; padding: 7px 12px; border-radius: 999px; background: rgba(82,119,107,.12); color: var(--success); font-size: 10px; font-weight: 800; }
+.cloud-loading { display: grid; min-height: 120px; place-items: center; align-content: center; gap: 10px; color: var(--muted); text-align: center; }
+.cloud-loading span { color: var(--wine); font-family: Georgia, serif; font-size: 34px; animation: cloud-pulse 1.2s ease-in-out infinite alternate; }
+.cloud-loading p { margin-bottom: 0; font-size: 11px; }
+.cloud-primary-action { width: 100%; }
+.cloud-local-mode-button { min-height: 44px; border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; font-weight: 750; text-decoration: underline; text-underline-offset: 4px; }
+.cloud-confirmation { padding: 11px 13px; border-radius: 15px; background: rgba(82,119,107,.12); color: var(--success) !important; }
+.cloud-inline-error, .cloud-form-error { margin: 0; padding: 11px 13px; border-radius: 15px; background: rgba(164,77,88,.1); color: var(--danger) !important; font-size: 11px; line-height: 1.55; }
+.cloud-auth-tabs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 20px; padding: 5px; border-radius: 18px; background: var(--surface); }
+.cloud-auth-tabs button { min-height: 43px; border: 0; border-radius: 14px; background: transparent; color: var(--muted); cursor: pointer; font-size: 12px; font-weight: 750; }
+.cloud-auth-tabs button.is-active { background: var(--paper); box-shadow: var(--shadow-soft); color: var(--wine); }
+.cloud-captcha { display: grid; min-width: 0; gap: 8px; padding: 14px; border: 1px solid rgba(127,63,83,.14); border-radius: 18px; background: rgba(255,250,246,.7); }
+.cloud-captcha__widget { display: grid; max-width: 100%; min-height: 65px; place-items: center; overflow: hidden; }
+.cloud-captcha__loading { color: var(--muted); font-size: 10px; }
+.cloud-captcha__status { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.55; text-align: center; }
+.cloud-captcha.is-verified { border-color: rgba(82,119,107,.28); background: rgba(82,119,107,.08); }
+.cloud-captcha.is-verified .cloud-captcha__status { color: var(--success); font-weight: 750; }
+.cloud-captcha.is-error, .cloud-captcha.is-expired { border-color: rgba(164,77,88,.25); }
+.cloud-captcha-issue { margin: 0; padding: 11px 13px; border-radius: 15px; background: rgba(164,77,88,.1); color: var(--danger); font-size: 11px; line-height: 1.55; }
+.invite-code-input { font-family: ui-monospace, SFMono-Regular, Consolas, monospace !important; font-size: 21px !important; font-weight: 800; letter-spacing: .16em; text-align: center; text-transform: uppercase; }
+.cloud-member-list { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 9px; }
+.cloud-member-list > span { display: grid; min-width: 0; gap: 3px; padding: 14px 11px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,.42); text-align: center; }
+.cloud-member-list i { color: var(--wine); font-family: Georgia, serif; font-size: 20px; font-style: normal; }
+.cloud-member-list strong { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.cloud-member-list small { color: var(--faint); font-size: 8px; }
+.cloud-member-list .is-me { border-color: rgba(127,63,83,.28); background: rgba(255,250,246,.78); }
+.cloud-member-list .is-waiting { border-style: dashed; background: transparent; }
+.cloud-invite-box { display: grid; place-items: center; gap: 6px; padding: 18px; border: 1px dashed rgba(127,63,83,.32); border-radius: 22px; background: rgba(255,250,246,.66); }
+.cloud-invite-box small { color: var(--wine); font-size: 8px; font-weight: 850; letter-spacing: .18em; }
+.cloud-invite-box button { padding: 3px 8px; border: 0; background: transparent; color: var(--wine-dark); cursor: pointer; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: clamp(24px,8vw,34px); font-weight: 900; letter-spacing: .14em; }
+.cloud-invite-box span { color: var(--faint); font-size: 9px; }
+.cloud-space-actions { display: grid; gap: 9px; }
+.cloud-account-footer { display: flex; flex-wrap: wrap; gap: 7px 14px; padding-top: 4px; border-top: 1px solid var(--line); }
+.cloud-account-footer button { min-height: 38px; padding: 0; border: 0; background: transparent; color: var(--wine); cursor: pointer; font-size: 10px; font-weight: 750; }
+.cloud-account-footer button.is-danger { color: var(--danger); }
+.cloud-alpha-note { padding: 10px 12px; border-radius: 14px; background: rgba(127,63,83,.07); color: var(--muted) !important; font-size: 9px !important; }
+@keyframes cloud-pulse { from { opacity: .45; transform: scale(.94); } to { opacity: 1; transform: scale(1.05); } }
+
+@media (min-width: 32rem) {
+  .cloud-space-actions { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}

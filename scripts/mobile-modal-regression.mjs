@@ -8,6 +8,9 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 const baseUrl = process.argv[2] ?? 'http://127.0.0.1:5173'
+const baseOrigin = new URL(baseUrl).origin
+const expectCloud = process.argv.includes('--expect-cloud')
+const expectCaptcha = process.argv.includes('--expect-captcha')
 const browserCandidates = [
   process.env.CHROME_PATH,
   'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
@@ -99,7 +102,14 @@ try {
   const target = await waitForValue(async () => {
     const response = await fetch(`http://127.0.0.1:${port}/json/list`)
     const targets = await response.json()
-    return targets.find((candidate) => candidate.type === 'page' && candidate.url.startsWith(baseUrl))
+    return targets.find((candidate) => {
+      if (candidate.type !== 'page') return false
+      try {
+        return new URL(candidate.url).origin === baseOrigin
+      } catch {
+        return false
+      }
+    })
   })
 
   client = new CdpClient(target.webSocketDebuggerUrl)
@@ -124,7 +134,10 @@ try {
     return result.result.value
   }
 
-  await waitForValue(() => evaluate(`document.readyState === 'complete' && location.origin === new URL('${baseUrl}').origin`))
+  await waitForValue(() => evaluate(`document.readyState === 'complete' && location.origin === '${baseOrigin}'`))
+  const openingVersion = await waitForValue(() => evaluate(`document.querySelector('.opening-letter__topline span:last-child')?.textContent`))
+  assert.match(openingVersion, /^V0\.5/, '首屏没有显示当前 V0.5 版本')
+  assert.doesNotMatch(openingVersion, /V0\.2/, '首屏仍显示已经过期的 V0.2 版本')
   await evaluate(`localStorage.removeItem('future-with-you.app-state.v3')`)
   await evaluate(`localStorage.setItem('future-with-you.app-state.v2', JSON.stringify({
     version: 2,
@@ -142,6 +155,17 @@ try {
   }))`)
   await client.send('Page.reload')
   await waitForValue(() => evaluate(`document.readyState === 'complete' && Boolean(document.querySelector('.bottom-nav'))`))
+  if (expectCloud) {
+    await waitForValue(() => evaluate(`document.querySelector('[role="dialog"]')?.textContent.includes('回到我们的云端空间')`))
+    assert(await evaluate(`(() => {
+      const button = [...document.querySelectorAll('button')].find((item) => item.textContent.includes('暂时使用本地模式'))
+      button?.click()
+      return Boolean(button)
+    })()`), '云端 Preview 首次进入时没有提供登录提示或本地模式出口')
+    await waitForValue(() => evaluate(`!document.querySelector('[role="dialog"]')`))
+    assert.equal(await evaluate(`sessionStorage.getItem('future-with-you.cloud-welcome.dismissed')`), '1', '本地模式选择没有在当前会话记住')
+    console.log(JSON.stringify({ cloudWelcomePrompted: true, localModeEscape: true }, null, 2))
+  }
   assert(await evaluate(`(() => {
     const button = [...document.querySelectorAll('.bottom-nav button')].find((item) => item.textContent.includes('故事'))
     button?.click()
@@ -220,6 +244,87 @@ try {
     return Boolean(button)
   })()`), '没有找到“我们”导航按钮')
   await waitForValue(() => evaluate(`Boolean([...document.querySelectorAll('button')].find((item) => item.textContent.includes('编辑我们的资料')))`))
+
+  if (expectCloud) {
+    assert(await waitForValue(() => evaluate(`(() => {
+      const button = [...document.querySelectorAll('button')].find((item) => item.textContent.includes('登录或创建账号'))
+      button?.scrollIntoView({ block: 'center' })
+      button?.click()
+      return Boolean(button)
+    })()`)), '云端模式下没有找到账号入口')
+    await waitForValue(() => evaluate(`Boolean(document.querySelector('[role="dialog"]')?.textContent.includes('云端空间'))`))
+    assert(await evaluate(`(() => {
+      const tab = [...document.querySelectorAll('[role="tab"]')].find((item) => item.textContent.includes('注册'))
+      tab?.click()
+      return Boolean(tab)
+    })()`), '账号弹窗没有注册标签')
+    await waitForValue(() => evaluate(`Boolean(document.querySelector('[role="dialog"] input[autocomplete="nickname"]'))`))
+    if (expectCaptcha) {
+      await waitForValue(
+        () => evaluate(`document.querySelector('.cloud-captcha')?.classList.contains('is-verified')`),
+        20_000,
+      )
+      const captchaReport = await evaluate(`(() => {
+        const challenge = document.querySelector('.cloud-captcha')
+        const submit = document.querySelector('[role="dialog"] button[type="submit"]')
+        return {
+          widgetMounted: Boolean(challenge?.querySelector('.cloud-captcha__widget')?.firstElementChild),
+          verified: challenge?.classList.contains('is-verified'),
+          submitEnabled: submit ? !submit.disabled : false,
+        }
+      })()`)
+      console.log(JSON.stringify({ alpha2Captcha: captchaReport }, null, 2))
+      assert.equal(captchaReport.widgetMounted, true, 'CAPTCHA 组件没有挂载到账号表单中')
+      assert.equal(captchaReport.verified, true, 'CAPTCHA 没有产生可提交的 token')
+      assert.equal(captchaReport.submitEnabled, true, 'CAPTCHA 成功后账号按钮仍不可提交')
+    }
+    await client.send('Emulation.setDeviceMetricsOverride', {
+      width: 390,
+      height: 430,
+      deviceScaleFactor: 1,
+      mobile: true,
+    })
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    const cloudModalReport = await evaluate(`(() => {
+      const overlay = document.querySelector('.modal-overlay')
+      const dialog = document.querySelector('[role="dialog"]')
+      const body = dialog?.querySelector('.modal-card__body')
+      const submit = dialog?.querySelector('button[type="submit"]')
+      const email = dialog?.querySelector('input[type="email"]')
+      if (body) body.scrollTop = body.scrollHeight
+      const dialogRect = dialog?.getBoundingClientRect()
+      const submitRect = submit?.getBoundingClientRect()
+      return {
+        viewportHeight: visualViewport?.height ?? innerHeight,
+        overlayIsBodyChild: overlay?.parentElement === document.body,
+        dialogTop: dialogRect?.top,
+        dialogBottom: dialogRect?.bottom,
+        bodyClientHeight: body?.clientHeight,
+        bodyScrollHeight: body?.scrollHeight,
+        submitTop: submitRect?.top,
+        submitBottom: submitRect?.bottom,
+        fieldCount: dialog?.querySelectorAll('.form-field').length,
+        inputFontSize: email ? parseFloat(getComputedStyle(email).fontSize) : 0,
+      }
+    })()`)
+    console.log(JSON.stringify({ alpha2CloudModal: cloudModalReport }, null, 2))
+    assert.equal(cloudModalReport.overlayIsBodyChild, true, '账号弹窗没有挂载到 body')
+    assert.equal(cloudModalReport.fieldCount, 3, '注册表单字段不完整')
+    assert(cloudModalReport.dialogTop >= 0, '账号弹窗顶部超出手机可视区')
+    assert(cloudModalReport.dialogBottom <= cloudModalReport.viewportHeight + 1, '账号弹窗底部超出手机可视区')
+    assert(cloudModalReport.bodyScrollHeight >= cloudModalReport.bodyClientHeight, '账号表单没有可控滚动区域')
+    assert(cloudModalReport.submitTop >= 0 && cloudModalReport.submitBottom <= cloudModalReport.viewportHeight + 1, '账号表单提交按钮不可见')
+    assert(cloudModalReport.inputFontSize >= 16, '手机输入框字号会触发 iOS 自动缩放')
+    await evaluate(`document.querySelector('.modal-close')?.click()`)
+    await waitForValue(() => evaluate(`!document.querySelector('[role="dialog"]')`))
+    await client.send('Emulation.setDeviceMetricsOverride', {
+      width: 390,
+      height: 844,
+      deviceScaleFactor: 1,
+      mobile: true,
+    })
+  }
+
   await evaluate(`(() => {
     const originalCreateObjectURL = URL.createObjectURL.bind(URL)
     URL.createObjectURL = (blob) => { window.__capturedBackupBlob = blob; return originalCreateObjectURL(blob) }
@@ -228,10 +333,14 @@ try {
   })()`)
   assert(await evaluate(`(() => {
     const button = [...document.querySelectorAll('button')].find((item) => item.textContent.includes('下载完整备份'))
-    button?.scrollIntoView({ block: 'center' })
+    button?.scrollIntoView({ block: 'center', behavior: 'instant' })
     return Boolean(button)
   })()`), '没有找到“下载完整备份”按钮')
-  await new Promise((resolve) => setTimeout(resolve, 300))
+  await waitForValue(() => evaluate(`(() => {
+    const button = [...document.querySelectorAll('button')].find((item) => item.textContent.includes('下载完整备份'))
+    const rect = button?.getBoundingClientRect()
+    return Boolean(rect && rect.top >= 0 && rect.bottom <= innerHeight)
+  })()`))
   const backupButton = await evaluate(`(() => {
     const button = [...document.querySelectorAll('button')].find((item) => item.textContent.includes('下载完整备份'))
     const rect = button?.getBoundingClientRect()

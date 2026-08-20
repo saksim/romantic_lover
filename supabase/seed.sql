@@ -1,0 +1,2 @@
+-- Alpha 2 intentionally has no shared seed data.
+-- Test accounts and couple spaces are created through Supabase Auth and the app.
