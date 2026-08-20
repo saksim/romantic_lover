@@ -8,7 +8,7 @@ export function OpeningScreen({ returning, onEnter }: OpeningScreenProps) {
       <div className="opening-orbit opening-orbit--one" aria-hidden="true" />
       <div className="opening-orbit opening-orbit--two" aria-hidden="true" />
       <div className="opening-letter">
-        <div className="opening-letter__topline"><span>TO · YOU</span><span>V0.2</span></div>
+        <div className="opening-letter__topline"><span>TO · YOU</span><span title={'Build ' + __APP_VERSION__}>{__APP_RELEASE_LABEL__}</span></div>
         <div className="opening-seal"><LogoMark /></div>
         <p className="opening-kicker">A little future, for us</p>
         <h1 id="opening-title">Future<br />With You</h1>

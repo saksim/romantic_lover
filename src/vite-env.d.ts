@@ -1,5 +1,8 @@
 /// <reference types="vite/client" />
 
+declare const __APP_VERSION__: string
+declare const __APP_RELEASE_LABEL__: string
+
 interface ImportMetaEnv {
   readonly VITE_BACKEND_PROVIDER?: 'local' | 'cloudbase-pg' | 'supabase'
   readonly VITE_CLOUDBASE_ENV_ID?: string

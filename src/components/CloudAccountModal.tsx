@@ -9,13 +9,14 @@ interface CloudAccountModalProps {
   account: CloudAccountController
   onClose: () => void
   onNotify: (message: string) => void
+  offerLocalMode?: boolean
 }
 
-export function CloudAccountModal({ mode, account, onClose, onNotify }: CloudAccountModalProps) {
+export function CloudAccountModal({ mode, account, onClose, onNotify, offerLocalMode = false }: CloudAccountModalProps) {
   useEffect(() => account.clearError(), [account.clearError, mode])
 
   if (mode === 'auth') {
-    return <AuthModal account={account} onClose={onClose} onNotify={onNotify} />
+    return <AuthModal account={account} onClose={onClose} onNotify={onNotify} offerLocalMode={offerLocalMode} />
   }
   if (mode === 'create') {
     return <CreateSpaceModal account={account} onClose={onClose} onNotify={onNotify} />
@@ -30,7 +31,7 @@ function ErrorMessage({ account }: { account: CloudAccountController }) {
   return account.error ? <p className="cloud-form-error" role="alert">{account.error}</p> : null
 }
 
-function AuthModal({ account, onClose, onNotify }: Omit<CloudAccountModalProps, 'mode'>) {
+function AuthModal({ account, onClose, onNotify, offerLocalMode }: Omit<CloudAccountModalProps, 'mode'>) {
   const [authMode, setAuthMode] = useState<'sign-in' | 'sign-up'>('sign-in')
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
@@ -39,6 +40,10 @@ function AuthModal({ account, onClose, onNotify }: Omit<CloudAccountModalProps, 
   const changeMode = (nextMode: 'sign-in' | 'sign-up') => {
     setAuthMode(nextMode)
     account.clearError()
+  }
+  const continueLocally = () => {
+    onNotify('已进入本地模式，云端登录入口仍在“我们”页面')
+    onClose()
   }
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -72,6 +77,7 @@ function AuthModal({ account, onClose, onNotify }: Omit<CloudAccountModalProps, 
         <ErrorMessage account={account} />
         <button type="submit" className="primary-button form-submit" disabled={account.busy}><span>{account.busy ? '正在连接…' : authMode === 'sign-in' ? '登录云端空间' : '创建我的账号'}</span><span aria-hidden="true">♥</span></button>
         <p className="form-note">账号只负责识别“你是谁”。本地愿望与回忆在 Alpha 3 迁移确认前不会自动上传，也不会被覆盖。</p>
+        {offerLocalMode && <button type="button" className="cloud-local-mode-button" onClick={continueLocally}>暂时使用本地模式</button>}
       </form>
     </ModalShell>
   )

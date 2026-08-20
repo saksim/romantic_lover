@@ -126,6 +126,9 @@ try {
   }
 
   await waitForValue(() => evaluate(`document.readyState === 'complete' && location.origin === new URL('${baseUrl}').origin`))
+  const openingVersion = await waitForValue(() => evaluate(`document.querySelector('.opening-letter__topline span:last-child')?.textContent`))
+  assert.match(openingVersion, /^V0\.5/, '首屏没有显示当前 V0.5 版本')
+  assert.doesNotMatch(openingVersion, /V0\.2/, '首屏仍显示已经过期的 V0.2 版本')
   await evaluate(`localStorage.removeItem('future-with-you.app-state.v3')`)
   await evaluate(`localStorage.setItem('future-with-you.app-state.v2', JSON.stringify({
     version: 2,
@@ -143,6 +146,17 @@ try {
   }))`)
   await client.send('Page.reload')
   await waitForValue(() => evaluate(`document.readyState === 'complete' && Boolean(document.querySelector('.bottom-nav'))`))
+  if (expectCloud) {
+    await waitForValue(() => evaluate(`document.querySelector('[role="dialog"]')?.textContent.includes('回到我们的云端空间')`))
+    assert(await evaluate(`(() => {
+      const button = [...document.querySelectorAll('button')].find((item) => item.textContent.includes('暂时使用本地模式'))
+      button?.click()
+      return Boolean(button)
+    })()`), '云端 Preview 首次进入时没有提供登录提示或本地模式出口')
+    await waitForValue(() => evaluate(`!document.querySelector('[role="dialog"]')`))
+    assert.equal(await evaluate(`sessionStorage.getItem('future-with-you.cloud-welcome.dismissed')`), '1', '本地模式选择没有在当前会话记住')
+    console.log(JSON.stringify({ cloudWelcomePrompted: true, localModeEscape: true }, null, 2))
+  }
   assert(await evaluate(`(() => {
     const button = [...document.querySelectorAll('.bottom-nav button')].find((item) => item.textContent.includes('故事'))
     button?.click()

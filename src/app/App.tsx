@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { CelebrationOverlay, type CelebrationType } from '../components/RomanceEffects'
+import { CloudAccountModal } from '../components/CloudAccountModal'
 import { CompletionModal } from '../components/CompletionModal'
 import { CustomWishModal } from '../components/CustomWishModal'
 import { DateRouletteModal } from '../components/DateRouletteModal'
@@ -23,12 +24,23 @@ import { daysSince } from '../utils/date'
 import { AppShell } from './AppShell'
 
 interface CelebrationState { type: CelebrationType; nonce: number }
+const CLOUD_WELCOME_DISMISSED_KEY = 'future-with-you.cloud-welcome.dismissed'
+
+function cloudWelcomeWasDismissed() {
+  if (typeof window === 'undefined') return false
+  try {
+    return window.sessionStorage.getItem(CLOUD_WELCOME_DISMISSED_KEY) === '1'
+  } catch {
+    return false
+  }
+}
 
 export function App() {
   const appState = useWishProgress()
   const pwaInstall = usePwaInstall()
   const cloudAccount = useCloudAccount()
   const [view, setView] = useState<AppView>(() => appState.state.hasOpened ? 'today' : 'opening')
+  const [cloudWelcomeDismissed, setCloudWelcomeDismissed] = useState(cloudWelcomeWasDismissed)
   const [toast, setToast] = useState('')
   const [addWishOpen, setAddWishOpen] = useState(false)
   const [rouletteOpen, setRouletteOpen] = useState(false)
@@ -36,6 +48,8 @@ export function App() {
   const [memoryEditor, setMemoryEditor] = useState<Memory | 'new' | null>(null)
   const [storyFocusId, setStoryFocusId] = useState<string>()
   const [celebration, setCelebration] = useState<CelebrationState | null>(null)
+  const cloudWelcomeOpen = view !== 'opening' && cloudAccount.enabled && !cloudAccount.configurationIssue
+    && !cloudAccount.loading && !cloudAccount.session && !cloudWelcomeDismissed
 
   const allWishes = useMemo(() => [...wishes, ...appState.state.customWishes], [appState.state.customWishes])
   const rouletteIdeas = useMemo<DateIdea[]>(() => [
@@ -68,6 +82,14 @@ export function App() {
   const notify = useCallback((message: string) => {
     setToast(message)
     window.setTimeout(() => setToast(''), 2700)
+  }, [])
+  const dismissCloudWelcome = useCallback(() => {
+    try {
+      window.sessionStorage.setItem(CLOUD_WELCOME_DISMISSED_KEY, '1')
+    } catch {
+      // Private browsing can reject storage; React state still dismisses this prompt.
+    }
+    setCloudWelcomeDismissed(true)
   }, [])
   const navigate = useCallback((nextView: AppView) => {
     setView(nextView)
@@ -176,6 +198,8 @@ export function App() {
         onNotify={notify} />}
       {view === 'secret' && <SecretScreen openedAt={appState.state.secretOpenedAt} onBack={() => navigate('story')} />}
 
+      {cloudWelcomeOpen && <CloudAccountModal mode="auth" account={cloudAccount} onClose={dismissCloudWelcome}
+        onNotify={notify} offerLocalMode />}
       {addWishOpen && <CustomWishModal categories={categories} profile={appState.state.profile}
         onSave={saveCustomWish} onClose={() => setAddWishOpen(false)} />}
       {completionWish && <CompletionModal wish={completionWish} progress={completionProgress}
