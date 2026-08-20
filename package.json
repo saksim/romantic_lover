@@ -1,8 +1,8 @@
 {
   "name": "future-with-you",
   "private": true,
-  "version": "0.5.0-dev.6",
-  "releaseChannel": "ALPHA 2",
+  "version": "0.5.0-dev.7",
+  "releaseChannel": "ALPHA 3",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,9 +12,11 @@
     "generate:icons": "node scripts/generate-icons.mjs",
     "test:v050": "node scripts/v050-foundation-check.mjs",
     "test:alpha2": "node scripts/alpha2-security-check.mjs",
-    "test:alpha2:mobile": "node scripts/mobile-modal-regression.mjs http://127.0.0.1:4173 --expect-cloud"
+    "test:alpha2:mobile": "node scripts/mobile-modal-regression.mjs http://127.0.0.1:4173 --expect-cloud",
+    "test:alpha3": "node scripts/alpha3-mainland-check.mjs"
   },
   "dependencies": {
+    "@cloudbase/js-sdk": "^3.8.0",
     "@hcaptcha/react-hcaptcha": "^2.1.0",
     "@marsidev/react-turnstile": "^1.6.0",
     "@supabase/supabase-js": "^2.112.3",

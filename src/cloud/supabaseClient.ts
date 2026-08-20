@@ -37,7 +37,7 @@ export function getSupabaseClientState(): SupabaseClientState {
       storageKey: 'future-with-you.supabase.auth',
     },
     global: {
-      headers: { 'X-Client-Info': 'future-with-you/0.5-alpha2' },
+      headers: { 'X-Client-Info': 'future-with-you/0.5-alpha3' },
     },
   })
 

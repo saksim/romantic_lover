@@ -40,7 +40,7 @@ assert.match(client, /persistSession:\s*true/, 'Auth sessions must persist safel
 assert.match(gateway, /join_couple_by_code/, 'The Supabase gateway must use the protected invite RPC.')
 assert.match(panel, /愿望、回忆与照片仍以本机为准/, 'Alpha 2 UI must not imply that local stories are already synced.')
 assert.doesNotMatch(`${client}\n${gateway}\n${envExample}`, /sb_secret_|service_role|SUPABASE_SECRET/i, 'Browser code and examples must never mention a privileged key.')
-assert.equal(packageMetadata.releaseChannel, 'ALPHA 2', 'Package metadata must identify the current release channel.')
+assert.match(packageMetadata.releaseChannel, /^ALPHA [23]$/, 'Alpha 2 security regressions must remain active in Alpha 2 or Alpha 3.')
 assert.match(viteConfig, /__APP_RELEASE_LABEL__/, 'Vite must inject release metadata from package.json.')
 assert.match(opening, /__APP_RELEASE_LABEL__/, 'The opening letter must use injected release metadata.')
 assert.doesNotMatch(opening, /V0\.2/, 'The opening letter must not retain the stale V0.2 label.')

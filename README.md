@@ -2,11 +2,11 @@
 
 Future With You 是一份可以装进手机里的情侣礼物。V0.4.0 把原有的愿望、约会灵感、每日问答和时间胶囊，扩展成一套会持续生长的“共同故事宇宙”。
 
-> `main` 当前是已发布的 V0.4.0；`dev` 已进入 `0.5.0-dev.6`（Alpha 2）。当前实现 Supabase 注册登录、双供应商 CAPTCHA、人机验证错误诊断、个人资料、情侣空间与一次性邀请码；本地故事迁移仍留在 Alpha 3。完整设计见 [V0.5.0 双人云端版架构](docs/V0.5.0_ARCHITECTURE.md)。
+> `main` 当前包含已验证的 `0.5.0-dev.6`（Alpha 2 海外基线）；`dev` 已进入 `0.5.0-dev.7`（Alpha 3 中国大陆链路）。Alpha 3 为同一套账号、资料、情侣空间和一次性邀请码增加 CloudBase PG 适配；本地故事不会在本阶段上传。完整设计见 [V0.5.0 双人云端版架构](docs/V0.5.0_ARCHITECTURE.md)。
 
-V0.5 当前优先打通 Vercel Preview / Production 与 Supabase；CloudBase 和中国大陆镜像延后评估。Vercel 负责发布前端，Supabase 负责账号、数据库、对象存储和实时事件。
+V0.5 使用同一份 React PWA 支持两个部署入口：Vercel + Supabase 是海外基线，CloudBase 静态托管 + CloudBase PG 是大陆候选。每个构建只能选择一个权威后端，绝不跨云双写。
 
-Alpha 2 的数据库迁移、Auth 设置和双设备验收步骤见 [Supabase 开通清单](docs/ALPHA2_SUPABASE_RUNBOOK.md)。
+海外配置见 [Supabase 开通清单](docs/ALPHA2_SUPABASE_RUNBOOK.md)；大陆测试环境、Git 发布、验证码与双设备验收见 [CloudBase 开通清单](docs/ALPHA3_CLOUDBASE_RUNBOOK.md)，本轮范围与回滚边界见 [Alpha 3 Release Notes](docs/ALPHA3_RELEASE_NOTES.md)。
 
 ## 怎么交给她
 
@@ -83,6 +83,9 @@ npm run dev
 ## 构建与回归
 
 ```powershell
+npm run test:v050
+npm run test:alpha2
+npm run test:alpha3
 npm run build
 npm run preview
 ```
@@ -104,10 +107,10 @@ npm run test:mobile -- http://127.0.0.1:4173
 
 ## 发布流程
 
-1. 所有 V0.4.0 修改提交到 `dev` 并推送。
+1. 所有 V0.5 修改提交到 `dev` 并推送，测试部署不得代替正式发布。
 2. 创建 `dev → main` Pull Request。
 3. 由代码审查者检查 Release Note、变更和回归结果。
-4. 审查者手动合并并在 Vercel 发布正式版本。
+4. 审查者手动合并；只有 `main` 才进入 Vercel / CloudBase 正式发布流程。
 5. 将 HTTPS 正式链接发给她安装。
 
 本流程不会由开发代理自动合并 `main` 或点击生产发布。
@@ -115,6 +118,9 @@ npm run test:mobile -- http://127.0.0.1:4173
 ## 项目结构
 
 - `src/app`：应用入口、页面编排和跨功能联动。
+- `src/cloud`：Supabase / CloudBase 账号与情侣空间适配器、风险验证码桥接。
+- `backend/cloudbase-pg`：CloudBase PG 基础 schema 与 RPC 安全加固迁移。
+- `scripts/alpha3-mainland-check.mjs`：大陆后端、密钥边界、分支门禁与版本回归。
 - `src/features/story`：时间轴、回忆星空和恋爱博物馆。
 - `src/features/today`：首页、那年今日、约会灵感和每日问题。
 - `src/features/wishes`：愿望浏览与共同创造。

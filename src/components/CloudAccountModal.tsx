@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { getCaptchaClientConfig } from '../cloud/captchaConfig'
+import { cancelCloudBaseCaptcha } from '../cloud/cloudbaseCaptcha'
 import type { CloudAccountController } from '../hooks/useCloudAccount'
 import { CaptchaChallenge } from './CaptchaChallenge'
+import { CloudBaseCaptchaChallenge } from './CloudBaseCaptchaChallenge'
+import { CloudBaseEmailVerificationModal } from './CloudBaseEmailVerificationModal'
 import { ModalShell } from './ModalShell'
 
 export type CloudDialogMode = 'auth' | 'create' | 'join' | 'profile'
@@ -34,15 +37,29 @@ function ErrorMessage({ account }: { account: CloudAccountController }) {
 }
 
 function AuthModal({ account, onClose, onNotify, offerLocalMode }: Omit<CloudAccountModalProps, 'mode'>) {
+  useEffect(() => () => cancelCloudBaseCaptcha(), [])
+
   const [authMode, setAuthMode] = useState<'sign-in' | 'sign-up'>('sign-in')
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [captchaToken, setCaptchaToken] = useState<string>()
   const [captchaResetKey, setCaptchaResetKey] = useState(0)
-  const captchaConfig = useMemo(getCaptchaClientConfig, [])
+  const captchaConfig = useMemo<ReturnType<typeof getCaptchaClientConfig>>(
+    () => account.provider === 'supabase' ? getCaptchaClientConfig() : { enabled: false },
+    [account.provider],
+  )
   const captchaPending = captchaConfig.enabled && !captchaToken
   const submitDisabled = account.busy || Boolean(captchaConfig.issue) || captchaPending
+
+  const closeAuth = () => {
+    cancelCloudBaseCaptcha()
+    onClose()
+  }
+
+  if (account.signUpVerification) {
+    return <CloudBaseEmailVerificationModal account={account} onClose={closeAuth} onNotify={onNotify} />
+  }
 
   const resetCaptcha = () => {
     setCaptchaToken(undefined)
@@ -51,12 +68,14 @@ function AuthModal({ account, onClose, onNotify, offerLocalMode }: Omit<CloudAcc
 
   const changeMode = (nextMode: 'sign-in' | 'sign-up') => {
     setAuthMode(nextMode)
+    cancelCloudBaseCaptcha()
     account.clearError()
+    account.clearSignUpVerification()
     resetCaptcha()
   }
   const continueLocally = () => {
     onNotify('已进入本地模式，云端登录入口仍在“我们”页面')
-    onClose()
+    closeAuth()
   }
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -66,10 +85,12 @@ function AuthModal({ account, onClose, onNotify, offerLocalMode }: Omit<CloudAcc
       resetCaptcha()
       if (result === 'signed-in') {
         onNotify('账号已经创建，云端双人空间正在等你们')
-        onClose()
+        closeAuth()
+      } else if (result === 'verification-required') {
+        onNotify('邮箱验证码已经发出，请在这封信里完成确认')
       } else if (result === 'confirmation-required') {
         onNotify('验证邮件已经发出，请从邮件回到这份礼物')
-        onClose()
+        closeAuth()
       }
       return
     }
@@ -77,12 +98,12 @@ function AuthModal({ account, onClose, onNotify, offerLocalMode }: Omit<CloudAcc
     resetCaptcha()
     if (signedIn) {
       onNotify('欢迎回来，云端空间已经连接')
-      onClose()
+      closeAuth()
     }
   }
 
   return (
-    <ModalShell title={authMode === 'sign-in' ? '回到我们的云端空间' : '为两个人留一个账号'} eyebrow="TWO HEARTS, ONE SPACE" onClose={onClose}>
+    <ModalShell title={authMode === 'sign-in' ? '回到我们的云端空间' : '为两个人留一个账号'} eyebrow="TWO HEARTS, ONE SPACE" onClose={closeAuth}>
       <div className="cloud-auth-tabs" role="tablist" aria-label="账号操作">
         <button type="button" role="tab" aria-selected={authMode === 'sign-in'} className={authMode === 'sign-in' ? 'is-active' : ''} onClick={() => changeMode('sign-in')}>登录</button>
         <button type="button" role="tab" aria-selected={authMode === 'sign-up'} className={authMode === 'sign-up' ? 'is-active' : ''} onClick={() => changeMode('sign-up')}>注册</button>
@@ -92,9 +113,10 @@ function AuthModal({ account, onClose, onNotify, offerLocalMode }: Omit<CloudAcc
         <label className="form-field"><span>邮箱</span><input required autoFocus={authMode === 'sign-in'} type="email" inputMode="email" autoCapitalize="none" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" /></label>
         <label className="form-field"><span>密码</span><input required minLength={8} type="password" autoComplete={authMode === 'sign-in' ? 'current-password' : 'new-password'} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="至少 8 位" /></label>
         <CaptchaChallenge config={captchaConfig} resetKey={captchaResetKey} onTokenChange={setCaptchaToken} />
+        <CloudBaseCaptchaChallenge />
         <ErrorMessage account={account} />
         <button type="submit" className="primary-button form-submit" disabled={submitDisabled}><span>{account.busy ? '正在连接…' : captchaConfig.issue ? '验证码配置待完成' : captchaPending ? '请先完成人机验证' : authMode === 'sign-in' ? '登录云端空间' : '创建我的账号'}</span><span aria-hidden="true">♥</span></button>
-        <p className="form-note">账号只负责识别“你是谁”。本地愿望与回忆在 Alpha 3 迁移确认前不会自动上传，也不会被覆盖。</p>
+        <p className="form-note">账号只负责识别“你是谁”。本地愿望与回忆不会自动上传或被覆盖；正式迁移会在单独确认后进行。</p>
         {offerLocalMode && <button type="button" className="cloud-local-mode-button" onClick={continueLocally}>暂时使用本地模式</button>}
       </form>
     </ModalShell>

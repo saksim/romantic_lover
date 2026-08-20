@@ -14,6 +14,7 @@ function formatExpiry(value: string) {
 
 export function CloudAccountPanel({ account, onNotify }: CloudAccountPanelProps) {
   const [dialog, setDialog] = useState<CloudDialogMode | null>(null)
+  const backendName = account.provider === 'cloudbase-pg' ? 'CloudBase 大陆云' : account.provider === 'supabase' ? 'Supabase 海外云' : '本地安全模式'
   const openDialog = (nextDialog: CloudDialogMode) => {
     account.clearError()
     setDialog(nextDialog)
@@ -38,7 +39,7 @@ export function CloudAccountPanel({ account, onNotify }: CloudAccountPanelProps)
   if (!account.enabled) {
     return <section className="cloud-space-card cloud-space-card--local" aria-labelledby="cloud-space-title">
       <div className="cloud-space-card__heading"><span aria-hidden="true">☁</span><div><p className="section-kicker">LOCAL SAFE MODE</p><h2 id="cloud-space-title">云端双人空间尚未开启</h2></div></div>
-      <p>当前版本继续使用本地数据。Production 会在账号、RLS 和双设备验证通过后才切换到 Supabase。</p>
+      <p>当前构建继续使用本地数据。海外 Supabase 或大陆 CloudBase 只有在账号、RLS 和双设备验收通过后才会启用。</p>
       <span className="cloud-status-pill">本地内容安全保留</span>
     </section>
   }
@@ -58,7 +59,8 @@ export function CloudAccountPanel({ account, onNotify }: CloudAccountPanelProps)
     return <>
       <section className="cloud-space-card" aria-labelledby="cloud-space-title">
         <div className="cloud-space-card__heading"><span aria-hidden="true">☁</span><div><p className="section-kicker">TWO DEVICES, ONE STORY</p><h2 id="cloud-space-title">开启云端双人空间</h2></div></div>
-        <p>登录后可以创建情侣空间或输入她的邀请码。Alpha 2 只同步身份与绑定关系，本地故事暂时不会上传。</p>
+        <p>登录后可以创建情侣空间或输入她的邀请码。Alpha 3 大陆适配先打通身份与绑定关系，本地故事暂时不会自动上传。</p>
+        <span className="cloud-status-pill">{backendName}</span>
         {account.confirmationEmail && <p className="cloud-confirmation" role="status">验证邮件已发送到 {account.confirmationEmail}</p>}
         {account.error && <p className="cloud-inline-error" role="alert">{account.error}</p>}
         <button type="button" className="primary-button cloud-primary-action" onClick={() => openDialog('auth')}>登录或创建账号</button>
@@ -84,7 +86,7 @@ export function CloudAccountPanel({ account, onNotify }: CloudAccountPanelProps)
       </>}
       {account.error && <p className="cloud-inline-error" role="alert">{account.error}</p>}
       <div className="cloud-account-footer"><button type="button" onClick={() => openDialog('profile')}>编辑我的资料</button>{account.couple && <button type="button" className="is-danger" onClick={leaveSpace}>退出情侣空间</button>}<button type="button" onClick={() => void account.signOut()}>退出登录</button></div>
-      <p className="cloud-alpha-note">Alpha 2：账号和情侣关系已上云；愿望、回忆与照片仍以本机为准，等待 Alpha 3 的无损迁移。</p>
+      <p className="cloud-alpha-note">Alpha 3 · {backendName}：账号和情侣关系已连接；愿望、回忆与照片仍以本机为准，不会在本 PR 中静默迁移或跨云双写。</p>
     </section>
     {dialog && <CloudAccountModal key={dialog} mode={dialog} account={account} onClose={() => setDialog(null)} onNotify={onNotify} />}
   </>

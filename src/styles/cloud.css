@@ -25,6 +25,18 @@
 .cloud-captcha.is-verified .cloud-captcha__status { color: var(--success); font-weight: 750; }
 .cloud-captcha.is-error, .cloud-captcha.is-expired { border-color: rgba(164,77,88,.25); }
 .cloud-captcha-issue { margin: 0; padding: 11px 13px; border-radius: 15px; background: rgba(164,77,88,.1); color: var(--danger); font-size: 11px; line-height: 1.55; }
+.cloudbase-captcha { display: grid; min-width: 0; gap: 12px; padding: 15px; border: 1px solid rgba(127,63,83,.18); border-radius: 20px; background: radial-gradient(circle at 100% 0, rgba(214,120,121,.16), transparent 38%), rgba(255,250,246,.84); }
+.cloudbase-captcha__heading { display: flex; align-items: center; gap: 10px; }
+.cloudbase-captcha__heading > span { display: grid; width: 34px; height: 34px; flex: 0 0 auto; place-items: center; border-radius: 12px; background: var(--wine); color: #fff; font-size: 10px; font-weight: 850; }
+.cloudbase-captcha__heading div { display: grid; gap: 2px; }
+.cloudbase-captcha__heading strong { color: var(--wine-dark); font-size: 11px; }
+.cloudbase-captcha__heading small { color: var(--faint); font-size: 8px; }
+.cloudbase-captcha img { width: min(100%, 320px); min-height: 74px; justify-self: center; border: 1px solid var(--line); border-radius: 14px; background: #fff; object-fit: contain; }
+.cloudbase-captcha__form, .cloudbase-captcha__actions { display: grid; gap: 9px; }
+.cloudbase-captcha__actions { grid-template-columns: minmax(0,.7fr) minmax(0,1.3fr); }
+.cloud-otp-letter { display: flex; align-items: center; gap: 12px; padding: 15px; border-radius: 20px; background: linear-gradient(135deg, rgba(127,63,83,.1), rgba(214,120,121,.1)); }
+.cloud-otp-letter > span { font-size: 25px; }.cloud-otp-letter div { min-width: 0; }.cloud-otp-letter strong { color: var(--wine-dark); font-size: 11px; }.cloud-otp-letter p { overflow: hidden; margin: 3px 0 0; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.cloud-otp-input { font-family: ui-monospace, SFMono-Regular, Consolas, monospace !important; font-size: 20px !important; font-weight: 800; letter-spacing: .12em; text-align: center; }
 .invite-code-input { font-family: ui-monospace, SFMono-Regular, Consolas, monospace !important; font-size: 21px !important; font-weight: 800; letter-spacing: .16em; text-align: center; text-transform: uppercase; }
 .cloud-member-list { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 9px; }
 .cloud-member-list > span { display: grid; min-width: 0; gap: 3px; padding: 14px 11px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,.42); text-align: center; }
