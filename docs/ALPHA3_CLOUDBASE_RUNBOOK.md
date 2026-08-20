@@ -1,5 +1,9 @@
 # V0.5 Alpha 3：CloudBase 中国大陆验收与部署清单
 
+> 如果实际执行者不熟悉开发或 CloudBase 控制台，请不要直接猜测下面的简版步骤。请从 [CloudBase 控制台逐屏交接手册](ALPHA3_CLOUDBASE_CONSOLE_WALKTHROUGH.md) 开始；其中给出了本项目的准确填值、每个菜单入口、GitHub 不可达时的源码 ZIP 方案、成功标准和故障分流。执行者电脑不需要 NPM、Python 或 Git。
+
+> 安全提醒：前端只使用 **Publishable Key**。任何已经出现在聊天、截图、Git 或前端变量中的服务端 **API Key / Service Role Key** 都必须先在 CloudBase 中吊销；本轮不需要重新创建服务端 Key。
+
 Alpha 3 的目标是验证中国大陆链路，不是立刻搬运私人故事。当前只把账号、个人资料、情侣空间和一次性邀请码接入 CloudBase；愿望、回忆、照片等仍保存在各自设备，绝不会静默上传、覆盖或跨云双写。
 
 ## 1. 数据真相与环境边界
@@ -21,7 +25,7 @@ Alpha 3 的目标是验证中国大陆链路，不是立刻搬运私人故事。
    - `backend/cloudbase-pg/migrations/0002_alpha3_mainland_auth_hardening.sql`
 3. 在身份认证中启用邮箱密码注册与登录。CloudBase 注册会向邮箱发送一次性验证码，网页再调用 `verifyOtp` 完成账号创建。
 4. 创建浏览器可用的 **Publishable Key**。Secret Key、管理员密钥和服务端密钥不得进入 Git、CloudBase 构建变量或任何 `VITE_*` 变量。
-5. 把 CloudBase 测试域名、未来正式域名和需要验收的 Vercel 域名加入 Web 安全域名。
+5. 静态托管部署成功并取得实际网址后，到“环境配置 → 安全来源 → 安全域名”确认默认域名已自动加入；若没有，只添加不含 `https://` 和路径的主机名。未来正式域名和需要验收的 Vercel 精确域名应分别添加，不使用宽泛通配符。
 
 `0002` 不能省略：CloudBase PostgREST 的 RPC 暴露不能只依赖 `GRANT EXECUTE`，所以四个高权限情侣操作都会在函数内部再次检查已验证 JWT 的 `authenticated` 角色。
 

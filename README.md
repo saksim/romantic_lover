@@ -6,7 +6,7 @@ Future With You 是一份可以装进手机里的情侣礼物。V0.4.0 把原有
 
 V0.5 使用同一份 React PWA 支持两个部署入口：Vercel + Supabase 是海外基线，CloudBase 静态托管 + CloudBase PG 是大陆候选。每个构建只能选择一个权威后端，绝不跨云双写。
 
-海外配置见 [Supabase 开通清单](docs/ALPHA2_SUPABASE_RUNBOOK.md)；大陆测试环境、Git 发布、验证码与双设备验收见 [CloudBase 开通清单](docs/ALPHA3_CLOUDBASE_RUNBOOK.md)，本轮范围与回滚边界见 [Alpha 3 Release Notes](docs/ALPHA3_RELEASE_NOTES.md)。
+海外配置见 [Supabase 开通清单](docs/ALPHA2_SUPABASE_RUNBOOK.md)；大陆测试环境、Git 发布、验证码与双设备验收见 [CloudBase 开通清单](docs/ALPHA3_CLOUDBASE_RUNBOOK.md)。不熟悉控制台的执行者应直接使用 [CloudBase 逐屏交接手册](docs/ALPHA3_CLOUDBASE_CONSOLE_WALKTHROUGH.md)，本轮范围与回滚边界见 [Alpha 3 Release Notes](docs/ALPHA3_RELEASE_NOTES.md)。
 
 ## 怎么交给她
 
