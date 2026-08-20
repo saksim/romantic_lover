@@ -54,6 +54,14 @@ export function CloudAccountPanel({ account, onNotify }: CloudAccountPanelProps)
   if (account.loading) {
     return <section className="cloud-space-card" aria-live="polite"><div className="cloud-loading"><span aria-hidden="true">∞</span><p>正在寻找你们的云端空间…</p></div></section>
   }
+  if (!account.ready) {
+    return <section className="cloud-space-card cloud-space-card--warning" aria-live="polite">
+      <div className="cloud-space-card__heading"><span aria-hidden="true">!</span><div><p className="section-kicker">CLOUD CONNECTION</p><h2>云端组件没有准备好</h2></div></div>
+      <p>{account.error ?? 'CloudBase 组件没有成功加载，请重新连接。'}</p>
+      <button type="button" className="secondary-button" onClick={() => window.location.reload()}>重新连接云端</button>
+    </section>
+  }
+
 
   if (!account.session) {
     return <>

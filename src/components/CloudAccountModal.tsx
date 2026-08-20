@@ -50,7 +50,7 @@ function AuthModal({ account, onClose, onNotify, offerLocalMode }: Omit<CloudAcc
     [account.provider],
   )
   const captchaPending = captchaConfig.enabled && !captchaToken
-  const submitDisabled = account.busy || Boolean(captchaConfig.issue) || captchaPending
+  const submitDisabled = account.loading || !account.ready || account.busy || Boolean(captchaConfig.issue) || captchaPending
 
   const closeAuth = () => {
     cancelCloudBaseCaptcha()
@@ -115,7 +115,16 @@ function AuthModal({ account, onClose, onNotify, offerLocalMode }: Omit<CloudAcc
         <CaptchaChallenge config={captchaConfig} resetKey={captchaResetKey} onTokenChange={setCaptchaToken} />
         <CloudBaseCaptchaChallenge />
         <ErrorMessage account={account} />
-        <button type="submit" className="primary-button form-submit" disabled={submitDisabled}><span>{account.busy ? '正在连接…' : captchaConfig.issue ? '验证码配置待完成' : captchaPending ? '请先完成人机验证' : authMode === 'sign-in' ? '登录云端空间' : '创建我的账号'}</span><span aria-hidden="true">♥</span></button>
+        <button type="submit" className="primary-button form-submit" disabled={submitDisabled}>
+          <span>{account.loading || !account.ready
+            ? '云端组件未就绪'
+            : account.busy
+              ? authMode === 'sign-up' ? '正在发送邮箱验证码…' : '正在登录…'
+              : captchaConfig.issue ? '验证码配置待完成'
+                : captchaPending ? '请先完成人机验证'
+                  : authMode === 'sign-in' ? '登录云端空间' : '创建我的账号'}</span>
+          <span aria-hidden="true">♥</span>
+        </button>
         <p className="form-note">账号只负责识别“你是谁”。本地愿望与回忆不会自动上传或被覆盖；正式迁移会在单独确认后进行。</p>
         {offerLocalMode && <button type="button" className="cloud-local-mode-button" onClick={continueLocally}>暂时使用本地模式</button>}
       </form>

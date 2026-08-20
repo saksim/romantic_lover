@@ -1,4 +1,4 @@
-# V0.5.0-dev.7 — Alpha 3 中国大陆候选
+# V0.5.0-dev.8 — Alpha 3 中国大陆候选
 
 状态：Draft / `dev → main` PR 候选
 范围：账号、个人资料、情侣空间、一次性邀请码和大陆部署链路
@@ -9,6 +9,8 @@
 - 同一份 React PWA 可在构建时选择 `local`、`supabase` 或 `cloudbase-pg`。
 - CloudBase Web SDK v3 支持邮箱密码注册、邮箱 OTP 确认、密码登录、会话保持与退出。
 - CloudBase 风控要求验证码时，会在现有手机弹窗内呈现图片验证码，可刷新并完成验证。
+- CloudBase 自定义验证码适配器现在同时保留有界 Web 请求、浏览器存储和 WebSocket 能力；Auth 请求不会再无限等待。
+- 云端动态模块未加载成功时，注册入口会被阻止并提供重新连接；邮箱验证码请求会显示明确进度和超时错误。
 - 个人资料、创建情侣空间、生成一次性邀请码、加入和退出均由 CloudBase PG 网关实现。
 - 高权限情侣 RPC 在函数内部验证 JWT `authenticated` 角色，避免 CloudBase PostgREST RPC 绕过 `GRANT EXECUTE` 的风险。
 - `dev` 只对应测试部署，`main` 只在 PR 评审与人工批准后进入正式发布。

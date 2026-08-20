@@ -49,7 +49,7 @@ export function App() {
   const [storyFocusId, setStoryFocusId] = useState<string>()
   const [celebration, setCelebration] = useState<CelebrationState | null>(null)
   const cloudWelcomeOpen = view !== 'opening' && cloudAccount.enabled && !cloudAccount.configurationIssue
-    && !cloudAccount.loading && !cloudAccount.session && !cloudWelcomeDismissed
+    && !cloudAccount.loading && cloudAccount.ready && !cloudAccount.session && !cloudWelcomeDismissed
 
   const allWishes = useMemo(() => [...wishes, ...appState.state.customWishes], [appState.state.customWishes])
   const rouletteIdeas = useMemo<DateIdea[]>(() => [

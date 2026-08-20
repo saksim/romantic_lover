@@ -1,7 +1,7 @@
 {
   "name": "future-with-you",
   "private": true,
-  "version": "0.5.0-dev.7",
+  "version": "0.5.0-dev.8",
   "releaseChannel": "ALPHA 3",
   "type": "module",
   "scripts": {

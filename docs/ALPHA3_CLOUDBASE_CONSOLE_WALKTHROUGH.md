@@ -263,6 +263,7 @@ https://romantic-lover-example.tcloudbaseapp.com/login
 | 页面显示“本地安全模式” | 四个 `VITE_*` 变量缺失或拼错 | 逐项对照填值表，重新构建；仅刷新不会改变已编译变量 |
 | `cors permission denied` / `permission_denied` | 当前网址没有加入安全域名 | 按第 6 步添加纯主机名，等待最多 10 分钟 |
 | Key 无效或初始化失败 | 误用了 API Key、Key 属于另一个环境或粘贴不完整 | 重新从当前环境复制 Publishable Key，绝不使用管理员 API Key |
+| 点击“创建我的账号”后一直等待 | 页面仍在运行 dev.7 的旧请求适配器，或 Auth 接口 / CORS 没有响应 | 部署 `0.5.0-dev.8`，用无痕窗口重试；根据 `request_timeout`、`gateway_unavailable` 或其他错误码继续排查 |
 | 注册后收不到验证码 | 邮箱登录未开启、发件人未配置、邮件被拦截或触发频控 | 检查身份认证和垃圾箱；60 秒后再试；必要时配置国内可投递 SMTP |
 | 创建空间 / 邀请时报 401、403 或 RPC 不存在 | SQL 未完整执行、`0002` 未执行或会话未登录 | 运行第 2 步只读检查；不要删除表重来 |
 | 图片验证码没有出现 | 未触发风控，或页面版本不是 Alpha 3 | 正常注册不一定触发验证码；只有 CloudBase 风控要求时才显示 |

@@ -10,6 +10,7 @@ export type SignUpActionResult = 'signed-in' | 'confirmation-required' | 'verifi
 export interface CloudAccountController {
   provider: BackendProvider
   enabled: boolean
+  ready: boolean
   configurationIssue?: string
   loading: boolean
   busy: boolean
@@ -56,6 +57,9 @@ export function useCloudAccount(): CloudAccountController {
     gateway?.cancelSignUpVerification?.()
     setSignUpVerification(undefined)
   }, [gateway])
+  const markGatewayUnavailable = useCallback(() => {
+    setError(friendlyCloudError({ code: 'gateway_unavailable' }))
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -151,7 +155,10 @@ export function useCloudAccount(): CloudAccountController {
   }, [refresh])
 
   const signUp = useCallback(async (input: SignUpInput): Promise<SignUpActionResult> => {
-    if (!gateway) return 'failed'
+    if (!gateway) {
+      markGatewayUnavailable()
+      return 'failed'
+    }
     setBusy(true)
     setError(undefined)
     setConfirmationEmail(undefined)
@@ -179,10 +186,13 @@ export function useCloudAccount(): CloudAccountController {
     } finally {
       setBusy(false)
     }
-  }, [gateway, refresh])
+  }, [gateway, markGatewayUnavailable, refresh])
 
   const verifySignUp = useCallback(async (code: string) => {
-    if (!gateway?.verifySignUp) return false
+    if (!gateway?.verifySignUp) {
+      markGatewayUnavailable()
+      return false
+    }
     setBusy(true)
     setError(undefined)
     try {
@@ -197,16 +207,19 @@ export function useCloudAccount(): CloudAccountController {
     } finally {
       setBusy(false)
     }
-  }, [gateway, refresh])
+  }, [gateway, markGatewayUnavailable, refresh])
 
   const signIn = useCallback((input: SignInInput) => {
-    if (!gateway) return Promise.resolve(false)
+    if (!gateway) {
+      markGatewayUnavailable()
+      return Promise.resolve(false)
+    }
     return run(async () => {
       await gateway.signIn(input)
       setConfirmationEmail(undefined)
       setSignUpVerification(undefined)
     })
-  }, [gateway, run])
+  }, [gateway, markGatewayUnavailable, run])
 
   const signOut = useCallback(() => {
     if (!gateway) return Promise.resolve(false)
@@ -256,6 +269,7 @@ export function useCloudAccount(): CloudAccountController {
   return {
     provider: gatewayBootstrap.provider,
     enabled: gatewayBootstrap.enabled,
+    ready: Boolean(gateway),
     configurationIssue: gatewayBootstrap.issue,
     loading,
     busy,

@@ -1,5 +1,7 @@
+import { CloudBaseWebRequest } from './cloudbaseWebRequest'
+
 interface CloudBaseAdapterHost {
-  useAdapters(adapter: never): unknown
+  useAdapters(adapter: unknown): unknown
 }
 
 export type CloudBaseCaptchaStatus = 'idle' | 'waiting' | 'verifying' | 'error'
@@ -45,6 +47,34 @@ let snapshot = IDLE_STATE
 let runtime: CloudBaseCaptchaRuntime | undefined
 let pending: PendingCaptcha | undefined
 let adapterInstalled = false
+
+const fallbackStorage = new Map<string, string>()
+const resilientLocalStorage = {
+  mode: 'sync' as const,
+  getItem(key: string) {
+    try {
+      return window.localStorage.getItem(key) ?? fallbackStorage.get(key) ?? null
+    } catch {
+      return fallbackStorage.get(key) ?? null
+    }
+  },
+  setItem(key: string, value: string) {
+    fallbackStorage.set(key, value)
+    try {
+      window.localStorage.setItem(key, value)
+    } catch {
+      // Private browsing can reject writes; the in-memory copy keeps Auth usable.
+    }
+  },
+  removeItem(key: string) {
+    fallbackStorage.delete(key)
+    try {
+      window.localStorage.removeItem(key)
+    } catch {
+      // The fallback has already been cleared.
+    }
+  },
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object'
@@ -105,9 +135,14 @@ export function installCloudBaseCaptchaAdapter(host: CloudBaseAdapterHost) {
     runtime: 'web',
     isMatch: () => typeof window !== 'undefined',
     genAdapter: () => ({
+      root: window,
+      reqClass: CloudBaseWebRequest,
+      wsClass: window.WebSocket,
+      localStorage: resilientLocalStorage,
+      primaryStorage: 'local',
       captchaOptions: { openURIWithCallback: openCaptcha },
     }),
-  } as never)
+  })
 }
 
 export function configureCloudBaseCaptcha(nextRuntime: CloudBaseCaptchaRuntime) {
